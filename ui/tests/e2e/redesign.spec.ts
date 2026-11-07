@@ -31,6 +31,39 @@ for (const viewport of [...KIOSK_VIEWPORTS, { width: 1440, height: 900 }]) {
   });
 }
 
+for (const viewport of [
+  { width: 1024, height: 600 },
+  { width: 1440, height: 900 },
+]) {
+  test(`club picker opens centered on screen without animating at ${viewport.width}×${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await gotoApp(page);
+    await page.getByRole('button', { name: 'Close Select club' }).click();
+    await expect(page.getByRole('dialog', { name: 'Select club' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Change club' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'Select club' });
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate((el) => el.getAnimations({ subtree: true }).length)).toBe(0);
+    const box = await dialog.boundingBox();
+    expect(Math.abs(box!.x + box!.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(2);
+    expect(Math.abs(box!.y + box!.height / 2 - viewport.height / 2)).toBeLessThanOrEqual(2);
+  });
+}
+
+test('selecting a club closes the picker and applies the club', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 });
+  await gotoApp(page);
+  const dialog = page.getByRole('dialog', { name: 'Select club' });
+  await dialog.getByRole('button', { name: 'Irons' }).click();
+  await dialog.getByRole('button', { name: '7i', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Change club' }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Select club' }).getByRole('button', { name: '7i', exact: true })
+  ).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('club selection keeps Tab inside the dialog and Escape returns focus to the trigger', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await gotoApp(page);

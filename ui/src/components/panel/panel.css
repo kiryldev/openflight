@@ -571,6 +571,8 @@
   padding: 0;
   gap: 0.1rem;
   justify-content: center;
+  justify-items: center;
+  text-align: center;
 }
 
 .live-panel__hero .metric-card--selected {
@@ -597,8 +599,10 @@
 }
 
 .live-panel__hero .metric-card__label {
-  font-size: clamp(0.5625rem, 12cqb, 0.875rem);
+  font-size: clamp(0.75rem, 14cqb, 1.25rem);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--color-accent);
   margin-top: 0;
   justify-content: center;
@@ -616,7 +620,7 @@
 
 .live-panel__hero .metric-card__subtext,
 .live-panel__hero .metric-card__confidence-label {
-  font-size: clamp(0.5625rem, 10cqb, 0.8125rem);
+  font-size: clamp(0.75rem, 12cqb, 1.0625rem);
   white-space: normal;
   text-align: center;
   overflow-wrap: anywhere;
@@ -635,8 +639,38 @@
 }
 
 .live-panel__hero .metric-card__confidence-dots .dot {
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.live-panel__hero .metric-card__meta:empty {
+  display: none;
+}
+
+/* Short kiosk heroes have no room for a third line: the caption sits beside the value. */
+@container (max-height: 9rem) {
+  .live-panel__hero .metric-card {
+    grid-template-columns: auto auto;
+    justify-content: center;
+    column-gap: 0.75rem;
+  }
+
+  .live-panel__hero .metric-card__label {
+    grid-column: 1 / -1;
+  }
+
+  .live-panel__hero .metric-card__value-row {
+    grid-column: 1;
+    width: auto;
+  }
+
+  .live-panel__hero .metric-card__meta {
+    grid-row: 3;
+    grid-column: 2;
+    align-self: center;
+    align-items: flex-start;
+    min-height: 0;
+  }
 }
 
 .live-panel__body--hero-expanded .live-panel__grid .metric-card {
@@ -650,7 +684,7 @@
 
 .live-panel__body--hero-expanded .live-panel__grid .metric-card__subtext,
 .live-panel__body--hero-expanded .live-panel__grid .metric-card__confidence-label {
-  font-size: clamp(0.5625rem, 1vw, 0.6875rem);
+  font-size: clamp(0.75rem, min(7.5cqi, 12cqb), 0.9375rem);
 }
 
 .shot-flash {
@@ -738,7 +772,29 @@
 }
 
 .live-panel__grid .metric-card--label-above {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
   gap: 0.35rem;
+  text-align: center;
+}
+
+.live-panel__grid .metric-card--label-above .metric-card__label {
+  grid-row: 1;
+  max-width: 100%;
+  font-size: clamp(0.75rem, min(9cqi, 14cqb), 1.0625rem);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.live-panel__grid .metric-card--label-above .metric-card__value-row {
+  grid-row: 2;
+  align-self: center;
+  justify-content: center;
+}
+
+.live-panel__grid .metric-card--label-above .metric-card__meta {
+  grid-row: 3;
+  align-items: center;
 }
 
 .live-panel__grid .metric-card__label,
@@ -748,9 +804,22 @@
   max-width: 100%;
 }
 
+.live-panel__grid .metric-card__subtext,
+.live-panel__grid .metric-card__confidence-label {
+  font-size: clamp(0.75rem, min(8cqi, 13cqb), 1rem);
+}
+
+.live-panel__grid .metric-card__confidence-dots {
+  gap: 0.25rem;
+}
+
+.live-panel__grid .metric-card__confidence-dots .dot {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
 .live-panel__grid .metric-card__subtext {
   display: block;
-  font-size: clamp(0.6875rem, 1.2vw, 0.75rem);
   line-height: 1.15;
   letter-spacing: -0.01em;
   white-space: normal;
@@ -2014,7 +2083,7 @@
   /* Prefer margin:auto centering — transform breaks native <dialog> focus wrap. */
   .picker-overlay,
   .profile-name-modal {
-    inset: unset;
+    inset: 0;
     margin: auto;
     width: min(34rem, calc(100% - 2rem));
     height: min(26rem, calc(100% - 2rem));
