@@ -12,6 +12,8 @@ interface PanelHeaderProps {
   subtitle?: ReactNode;
   /** Active club or training implement, shown after the subtitle. */
   club?: ReactNode;
+  /** Compact context shown after the club. */
+  meta?: ReactNode;
   /** Right-hand `PanelAction` buttons: primary, secondary, or danger. */
   actions?: ReactNode;
   /**
@@ -50,6 +52,7 @@ export function PanelHeader({
   title,
   subtitle,
   club,
+  meta,
   actions,
   connected: connectedProp,
   radarConnected: radarConnectedProp,
@@ -90,6 +93,7 @@ export function PanelHeader({
         </button>
         {subtitle ? <IdentityPart className="panel-header__subtitle">{subtitle}</IdentityPart> : null}
         {club ? <IdentityPart className="panel-header__club">{club}</IdentityPart> : null}
+        {meta ? <IdentityPart className="panel-header__meta">{meta}</IdentityPart> : null}
       </div>
       {actions ? <div className="panel-header__actions">{actions}</div> : null}
       {menuOpen ? (

@@ -330,6 +330,7 @@ function AppContent() {
             title={t('nav.live')}
             subtitle={activeProfileName}
             club={activeImplementLabel}
+            meta={t('live.latestShot', { number: profileLatestShot?.shot_number ?? 0 })}
             actions={liveHeaderActions}
           />
         </div>

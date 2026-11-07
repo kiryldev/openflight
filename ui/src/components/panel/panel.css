@@ -587,7 +587,7 @@
 /* Hero is a capped band; grid keeps the rest so ten tiles still fit values +
    subtitles. Tall big screens grow the hero via the media query below. */
 .live-panel__body--hero-expanded {
-  grid-template-rows: minmax(0, 20%) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 23%) minmax(0, 1fr);
 }
 
 .live-panel__body--hero-collapsed {
@@ -769,29 +769,16 @@
   display: none;
 }
 
-/* Short kiosk heroes have no room for a third line: the caption sits beside the value. */
-@container (max-height: 9rem) {
-  .live-panel__hero .metric-card {
-    grid-template-columns: auto auto;
-    justify-content: center;
-    column-gap: 0.75rem;
-  }
+@media (max-height: 699px) {
+  @container (max-height: 9rem) {
+    .live-panel__hero .metric-card {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
 
-  .live-panel__hero .metric-card__label {
-    grid-column: 1 / -1;
-  }
-
-  .live-panel__hero .metric-card__value-row {
-    grid-column: 1;
-    width: auto;
-  }
-
-  .live-panel__hero .metric-card__meta {
-    grid-row: 3;
-    grid-column: 2;
-    align-self: center;
-    align-items: flex-start;
-    min-height: 0;
+    .live-panel__hero .metric-card__value-row {
+      font-size: clamp(1.25rem, 35cqb, 1.75rem);
+    }
   }
 }
 
@@ -2012,10 +1999,6 @@
   color: var(--color-text-muted);
 }
 
-.live-panel__context {
-  display: none;
-}
-
 .live-panel__empty-icon {
   display: grid;
   place-items: center;
@@ -2169,20 +2152,6 @@
     padding: 1.25rem;
   }
 
-  .live-panel__context {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    padding: 0.25rem 1.25rem 0.75rem;
-    font-size: 0.5625rem;
-    color: var(--color-text-muted);
-  }
-
-  .live-panel__context strong {
-    font-weight: 500;
-    color: var(--color-text);
-  }
-
   .live-panel__body {
     padding-inline: 1.25rem;
   }
@@ -2194,6 +2163,20 @@
   @media (min-height: 700px) {
     .live-panel__body--hero-expanded {
       grid-template-rows: minmax(0, 34%) minmax(0, 1fr);
+    }
+  }
+
+  @media (min-height: 900px) {
+    .live-panel__body--hero-expanded {
+      grid-template-rows: minmax(0, 26%) minmax(0, 1fr);
+    }
+
+    .live-panel__body--hero-expanded:not(.live-panel__body--club-view) .live-panel__hero .metric-card {
+      grid-template-rows: minmax(0, 0.75fr) auto auto auto minmax(0, 1.25fr);
+    }
+
+    .live-panel__body--hero-expanded:not(.live-panel__body--club-view) .live-panel__hero .metric-card__value-row {
+      font-size: clamp(1.75rem, min(18cqi, 72cqb), 7rem);
     }
   }
 

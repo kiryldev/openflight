@@ -16,6 +16,12 @@ async function dismissPicker(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Close Select club' }).click();
 }
 
+test('shows the last-shot count in the header before the first shot', async ({ page }) => {
+  await gotoApp(page);
+  await dismissPicker(page);
+  await expect(page.locator('.panel-app__topbar .panel-header__meta')).toHaveText('Last shot · 0');
+});
+
 test('keeps visual labels compact on a large full-screen display', async ({ page }) => {
   await page.setViewportSize({ width: 3320, height: 1286 });
   await withControlSocket(async (socket) => {
@@ -31,6 +37,61 @@ test('keeps visual labels compact on a large full-screen display', async ({ page
   );
   expect(labelHeights).toHaveLength(7);
   expect(Math.max(...labelHeights)).toBeLessThanOrEqual(32);
+});
+
+test('uses the upper space for the main stat and gives the desktop grid more height', async ({ page }) => {
+  await page.setViewportSize({ width: 3414, height: 1102 });
+  await withControlSocket(async (socket) => {
+    await simulateShot(socket);
+  });
+
+  await gotoApp(page);
+  await dismissPicker(page);
+
+  await expect(page.locator('.panel-app__topbar .panel-header__meta')).toContainText('Last shot');
+  await expect(page.locator('.live-panel__context')).toHaveCount(0);
+  const heroValueSize = await page.locator('.live-panel__hero .metric-card__value-row').evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).fontSize)
+  );
+  const rootSize = await page.locator('html').evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+  expect(heroValueSize).toBeCloseTo(rootSize * 7, 0);
+
+  const body = await page.locator('.live-panel__body--hero-expanded').boundingBox();
+  const hero = await page.locator('.live-panel__hero').boundingBox();
+  const label = await page.locator('.live-panel__hero .metric-card__label').boundingBox();
+  const grid = await page.locator('.live-panel__grid').boundingBox();
+  expect(body).toBeTruthy();
+  expect(hero).toBeTruthy();
+  expect(label).toBeTruthy();
+  expect(grid).toBeTruthy();
+  expect(hero!.height / body!.height).toBeLessThanOrEqual(0.26);
+  expect(grid!.height / body!.height).toBeGreaterThanOrEqual(0.72);
+  expect(label!.y - hero!.y).toBeLessThanOrEqual(hero!.height * 0.28);
+
+  await page.evaluate(async () => {
+    const { useShotStore } = await import('/src/stores/useShotStore.ts');
+    const shot = useShotStore.getState().latestShot;
+    if (shot) {
+      useShotStore.getState().updateShot({ ...shot, carry_spin_adjusted: shot.estimated_carry_yards });
+    }
+  });
+  await page.locator('.live-panel__grid .metric-card').filter({ hasText: 'Carry' }).click();
+  const value = await page.locator('.live-panel__hero .metric-card__value-row').boundingBox();
+  const caption = await page.locator('.live-panel__hero .metric-card__subtext').boundingBox();
+  expect(value).toBeTruthy();
+  expect(caption).toBeTruthy();
+  expect(caption!.y).toBeGreaterThanOrEqual(value!.y + value!.height - 1);
+  expect(caption!.y + caption!.height).toBeLessThanOrEqual(hero!.y + hero!.height + 1);
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const shorterHero = await page.locator('.live-panel__hero').boundingBox();
+  const shorterValue = await page.locator('.live-panel__hero .metric-card__value-row').boundingBox();
+  const shorterCaption = await page.locator('.live-panel__hero .metric-card__subtext').boundingBox();
+  expect(shorterHero).toBeTruthy();
+  expect(shorterValue).toBeTruthy();
+  expect(shorterCaption).toBeTruthy();
+  expect(shorterCaption!.y).toBeGreaterThanOrEqual(shorterValue!.y + shorterValue!.height - 1);
+  expect(shorterCaption!.y + shorterCaption!.height).toBeLessThanOrEqual(shorterHero!.y + shorterHero!.height + 1);
 });
 
 for (const viewport of KIOSK_VIEWPORTS) {
@@ -359,6 +420,37 @@ for (const viewport of KIOSK_VIEWPORTS) {
 
       expect(Math.abs(centers.label - centers.hero)).toBeLessThanOrEqual(2);
       expect(Math.abs(centers.valueAndCaption - centers.hero)).toBeLessThanOrEqual(2);
+    });
+
+    test('keeps the full-screen carry caption beneath its value', async ({ page }) => {
+      await withControlSocket(async (socket) => {
+        await simulateShot(socket);
+      });
+
+      await gotoApp(page);
+      await dismissPicker(page);
+      await page.evaluate(async () => {
+        const { useShotStore } = await import('/src/stores/useShotStore.ts');
+        const shot = useShotStore.getState().latestShot;
+        if (shot) {
+          useShotStore.getState().updateShot({ ...shot, carry_spin_adjusted: shot.estimated_carry_yards });
+        }
+      });
+      await page.locator('.live-panel__grid .metric-card').filter({ hasText: 'Carry' }).click();
+
+      const hero = page.locator('.live-panel__hero');
+      const caption = hero.locator('.metric-card__subtext');
+      await expect(caption).toHaveText('Spin-adjusted');
+
+      const valueBox = await hero.locator('.metric-card__value-row').boundingBox();
+      const captionBox = await caption.boundingBox();
+      const heroBox = await hero.boundingBox();
+      expect(valueBox).toBeTruthy();
+      expect(captionBox).toBeTruthy();
+      expect(heroBox).toBeTruthy();
+      expect(captionBox!.y).toBeGreaterThanOrEqual(valueBox!.y + valueBox!.height - 1);
+      expect(Math.abs(captionBox!.x + captionBox!.width / 2 - heroBox!.x - heroBox!.width / 2)).toBeLessThanOrEqual(2);
+      expect(captionBox!.y + captionBox!.height).toBeLessThanOrEqual(heroBox!.y + heroBox!.height + 1);
     });
 
     test('keeps the full-screen caption fully visible', async ({ page }) => {

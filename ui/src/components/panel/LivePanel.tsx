@@ -101,9 +101,6 @@ export function LivePanel({
 
   return (
     <div className="panel">
-      <div className="live-panel__context">
-        <strong>{t('live.latestShot', { number: displayedShot?.shot_number ?? 0 })}</strong>
-      </div>
       <div className={bodyClass}>
         {isProfileNewShot ? <div className="shot-flash" /> : null}
         {canShowClubView && onSetClubView ? (

@@ -27,6 +27,13 @@ describe('PanelHeader', () => {
     expect(html.match(/panel-header__divider/g)).toHaveLength(2);
   });
 
+  it('shows live shot context after the club', () => {
+    const html = renderToString(<PanelHeader title="Live" subtitle="James" club="DR" meta="Last shot · 3" />);
+
+    expect(html).toMatch(/panel-header__club">DR<[^]*panel-header__meta">Last shot · 3</);
+    expect(html.match(/panel-header__divider/g)).toHaveLength(3);
+  });
+
   it('keeps the status menu closed until the LED and title are opened', () => {
     const html = renderToString(<PanelHeader title="Live" connected />);
 
