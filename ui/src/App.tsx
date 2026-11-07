@@ -290,7 +290,7 @@ function AppContent() {
   );
 
   return (
-    <div className={`panel-app ${isLaunchDaddyMode ? 'app--launch-daddy' : ''} ${isExploding ? 'app--exploding' : ''}`}>
+    <div className={`panel-app ${currentView === 'live' ? 'panel-app--live' : ''} ${isLaunchDaddyMode ? 'app--launch-daddy' : ''} ${isExploding ? 'app--exploding' : ''}`}>
       <LaunchDaddyOverlay />
 
       {iwr6843Alert && (
@@ -324,6 +324,17 @@ function AppContent() {
         />
       ) : null}
 
+      {currentView === 'live' ? (
+        <div className="panel-app__topbar">
+          <PanelHeader
+            title={t('nav.live')}
+            subtitle={activeProfileName}
+            club={activeImplementLabel}
+            actions={liveHeaderActions}
+          />
+        </div>
+      ) : null}
+
       <main id="main-content" tabIndex={-1} className="panel-app__main">
         {currentView === 'live' && (
           <>
@@ -333,8 +344,6 @@ function AppContent() {
                 shot={profileLatestShot}
                 shots={shots}
                 profileId={activeProfileId}
-                profileName={activeProfileName}
-                clubLabel={activeImplementLabel}
                 activeTrainingImplement={isSwingSpeedMode ? selectedTrainingImplement : undefined}
                 selectedMetricId={heroMetricId}
                 onSelectMetric={setHeroMetricId}
@@ -343,7 +352,6 @@ function AppContent() {
                 onSetClubView={setClubView}
                 recentRowMetricIds={recentRowMetricIds}
                 isNewShot={profileIsNewShot}
-                headerAction={liveHeaderActions}
               />
             </ShotProcessingArea>
             {debugMode && <SimShotBadges latestSimShots={latestSimShots} />}

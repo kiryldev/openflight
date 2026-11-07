@@ -1,4 +1,4 @@
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, useRef } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { GolfBallIcon } from '@hugeicons/core-free-icons';
 import type { Shot } from '../../types/shot';
@@ -8,7 +8,6 @@ import { useI18n } from '../../i18n/useI18n';
 import { useSharedFitFontSize } from '../../hooks/useFitFontSize';
 import { useDragScroll } from '../../hooks/useDragScroll';
 import { MetricCard } from '../ui/MetricCard';
-import { PanelHeader } from './PanelHeader';
 import { ClubImpactView } from './ClubImpactView';
 import { buildLiveMetrics, orderRowMetrics, pinSelectedMetric, resolveSelectedMetric } from './liveMetrics';
 
@@ -16,8 +15,6 @@ interface LivePanelProps {
   shot: Shot | null;
   shots: Shot[];
   profileId: string;
-  profileName: string;
-  clubLabel: string;
   /** Undefined outside swing-speed mode. Scopes the swing stats to one implement. */
   activeTrainingImplement?: string;
   /** Metric shown in full-screen mode. */
@@ -30,8 +27,6 @@ interface LivePanelProps {
   recentRowMetricIds?: string[];
   /** True for a freshly captured shot (not a restored session). */
   isNewShot?: boolean;
-  /** Pinned header control, e.g. Change club. */
-  headerAction?: ReactNode;
 }
 
 /**
@@ -43,8 +38,6 @@ export function LivePanel({
   shot,
   shots,
   profileId,
-  profileName,
-  clubLabel,
   activeTrainingImplement,
   selectedMetricId = null,
   onSelectMetric,
@@ -53,7 +46,6 @@ export function LivePanel({
   onSetClubView,
   recentRowMetricIds = [],
   isNewShot = false,
-  headerAction,
 }: LivePanelProps) {
   const { locale, t } = useI18n();
   const { unitSystem } = useUnitPreference();
@@ -84,12 +76,10 @@ export function LivePanel({
     rowMetrics.length > 0,
     rowMetrics.map((metric) => `${metric.value}:${metric.unit ?? ''}`).join('|')
   );
-  const header = <PanelHeader title={t('nav.live')} subtitle={profileName} club={clubLabel} actions={headerAction} />;
 
   if (!selected) {
     return (
       <div className="panel">
-        {header}
         <div className="panel__body panel__body--empty live-panel__empty">
           <span className="live-panel__empty-icon" aria-hidden="true">
             <HugeiconsIcon icon={GolfBallIcon} strokeWidth={1.5} />
@@ -111,7 +101,6 @@ export function LivePanel({
 
   return (
     <div className="panel">
-      {header}
       <div className="live-panel__context">
         <strong>{t('live.latestShot', { number: displayedShot?.shot_number ?? 0 })}</strong>
       </div>

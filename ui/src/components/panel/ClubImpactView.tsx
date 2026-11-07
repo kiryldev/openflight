@@ -112,7 +112,7 @@ export function ClubImpactView({ shot }: ClubImpactViewProps) {
               transform={`rotate(${axisVisual} ${topImpact.x} ${topImpact.y})`}
             />
           ) : null}
-          <text className={clubPath === null ? 'club-impact__missing' : ''} x="12" y="205">
+          <text className={clubPath === null ? 'club-impact__missing' : ''} x="12" y="140">
             {t('metric.clubPath')} {angleText(clubPath)}{clubPathIsExperimental ? ' *' : ''}
           </text>
           <text className={clubPath === null ? 'club-impact__missing club-impact__direction' : 'club-impact__direction'} x="12" y="221">

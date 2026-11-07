@@ -53,8 +53,6 @@ function render(
         shot={shot}
         shots={shots}
         profileId="james"
-        profileName="James"
-        clubLabel="DR"
         selectedMetricId={selectedMetricId}
         onSelectMetric={() => {}}
         fullScreen={fullScreen}
@@ -216,36 +214,12 @@ describe('LivePanel', () => {
     expect(html).toContain('aria-pressed="true"');
   });
 
-  it('shows the profile and club in the header', () => {
+  it('keeps the live header outside the data panel', () => {
     const html = render(makeShot(), [makeShot(), makeShot(), makeShot()]);
 
-    expect(html).toContain('panel-header__subtitle">James<');
-    expect(html).toContain('panel-header__club">DR<');
+    expect(html).not.toContain('panel-header');
     expect(html).not.toContain('mph / yds');
     expect(html).not.toContain('Shot 03');
-  });
-
-  it('places Change club in the header actions', () => {
-    const html = text(
-      renderToString(
-        <LivePanel
-          shot={null}
-          shots={[]}
-          profileId="james"
-          profileName="James"
-          clubLabel="DR"
-          headerAction={
-            <button type="button" className="panel-action">
-              Change club
-            </button>
-          }
-        />
-      )
-    );
-    const header = html.match(/<header class="panel-header">[\s\S]*?<\/header>/)?.[0] ?? '';
-
-    expect(header).toContain('Change club');
-    expect(header).toContain('panel-action');
   });
 
   it("shows the current profile's last shot, not the previous profile's", () => {
@@ -280,8 +254,6 @@ describe('LivePanel', () => {
           shot={swing}
           shots={[swing]}
           profileId="james"
-          profileName="James"
-          clubLabel="Stack 100g"
           activeTrainingImplement="stack-100g"
           onSelectMetric={() => {}}
         />

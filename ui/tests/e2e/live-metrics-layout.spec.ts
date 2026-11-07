@@ -16,9 +16,68 @@ async function dismissPicker(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Close Select club' }).click();
 }
 
+test('keeps visual labels compact on a large full-screen display', async ({ page }) => {
+  await page.setViewportSize({ width: 3320, height: 1286 });
+  await withControlSocket(async (socket) => {
+    await simulateShot(socket);
+  });
+
+  await gotoApp(page);
+  await dismissPicker(page);
+  await page.getByRole('button', { name: 'Show club impact' }).click();
+
+  const labelHeights = await page.locator('.club-impact svg text').evaluateAll((labels) =>
+    labels.map((label) => label.getBoundingClientRect().height)
+  );
+  expect(labelHeights).toHaveLength(7);
+  expect(Math.max(...labelHeights)).toBeLessThanOrEqual(32);
+});
+
 for (const viewport of KIOSK_VIEWPORTS) {
   test.describe(`live metrics at ${viewport.width}×${viewport.height}`, () => {
     test.use({ hasTouch: true, viewport });
+
+    test('keeps live controls in a footer-height top bar outside the data card', async ({ page }) => {
+      await withControlSocket(async (socket) => {
+        await simulateShot(socket);
+      });
+      await gotoApp(page);
+      await dismissPicker(page);
+
+      const topBar = page.locator('.panel-app__topbar');
+      const main = page.locator('.panel-app__main');
+      const footer = page.locator('.panel-footer');
+      await expect(topBar.getByRole('button', { name: 'Change club' })).toBeVisible();
+      await expect(topBar.getByRole('button', { name: 'Simulate shot' })).toBeVisible();
+      await expect(topBar.locator('.panel-header__subtitle')).toHaveText('Profile 1');
+      await expect(main.locator('.panel-header')).toHaveCount(0);
+
+      const titleBox = await topBar.locator('.panel-header__title').boundingBox();
+      const logoBox = await footer.locator('.panel-footer__menu svg').boundingBox();
+      const clubBox = await topBar.locator('.panel-header__club').boundingBox();
+      expect(titleBox).toBeTruthy();
+      expect(logoBox).toBeTruthy();
+      expect(clubBox).toBeTruthy();
+      expect(Math.abs(titleBox!.x - logoBox!.x)).toBeLessThanOrEqual(2);
+      const actions = topBar.locator('.panel-header__actions > button');
+      await expect(actions).toHaveCount(2);
+      const actionSizes = await actions.evaluateAll((buttons) => buttons.map((button) => ({
+        hitHeight: button.getBoundingClientRect().height,
+        visualHeight: Number.parseFloat(getComputedStyle(button, '::before').height),
+      })));
+      expect(actionSizes.every(({ hitHeight, visualHeight }) =>
+        hitHeight >= 44 && Math.abs(visualHeight - clubBox!.height) <= 2
+      )).toBe(true);
+
+      const headerBox = await topBar.boundingBox();
+      const mainBox = await main.boundingBox();
+      const footerBox = await footer.boundingBox();
+      expect(headerBox).toBeTruthy();
+      expect(mainBox).toBeTruthy();
+      expect(footerBox).toBeTruthy();
+      expect(Math.abs(headerBox!.height - footerBox!.height)).toBeLessThanOrEqual(2);
+      expect(headerBox!.y + headerBox!.height).toBeLessThanOrEqual(mainBox!.y + 1);
+    });
 
     test('keeps metric value text inside each live tile', async ({ page }) => {
       await withControlSocket(async (socket) => {
@@ -66,10 +125,19 @@ for (const viewport of KIOSK_VIEWPORTS) {
         return labels.map((label) => ({
           transform: getComputedStyle(label).textTransform,
           relativeSize: Number.parseFloat(getComputedStyle(label).fontSize) / rootSize,
+          weight: Number.parseInt(getComputedStyle(label).fontWeight, 10),
         }));
       });
       expect(visualTextStyles).toHaveLength(7);
-      expect(visualTextStyles.every(({ transform, relativeSize }) => transform === 'uppercase' && relativeSize <= 0.62)).toBe(true);
+      expect(visualTextStyles.every(({ transform, relativeSize, weight }) =>
+        transform === 'uppercase' && relativeSize <= 0.45 && weight >= 700
+      )).toBe(true);
+
+      const pathLabel = await impact.locator('g[aria-label="Top view"] text').filter({ hasText: /^Club path / }).boundingBox();
+      const topHead = await impact.locator('g[aria-label="Top view"] image').boundingBox();
+      expect(pathLabel).toBeTruthy();
+      expect(topHead).toBeTruthy();
+      expect(pathLabel!.y + pathLabel!.height).toBeLessThan(topHead!.y);
 
       const heroBox = await body.locator('.live-panel__hero .metric-card').boundingBox();
       const layoutBox = await body.locator('.live-panel__impact-layout').boundingBox();
