@@ -79,11 +79,14 @@ function AppContent() {
   );
   const activeProfile = profiles.find((profile) => profile.id === activeProfileId) ?? null;
   const activeProfileName = activeProfile?.name ?? '';
-  const { heroMetricId, setHeroMetricId, fullScreen } = useHeroMetricStore(
+  const { heroMetricId, setHeroMetricId, fullScreen, clubView, setClubView, recentRowMetricIds } = useHeroMetricStore(
     useShallow((state) => ({
       heroMetricId: state.heroMetricId,
       setHeroMetricId: state.setHeroMetricId,
       fullScreen: state.fullScreen,
+      clubView: state.clubView,
+      setClubView: state.setClubView,
+      recentRowMetricIds: state.recentRowMetricIds,
     }))
   );
   const {
@@ -336,6 +339,9 @@ function AppContent() {
                 selectedMetricId={heroMetricId}
                 onSelectMetric={setHeroMetricId}
                 fullScreen={fullScreen}
+                clubView={clubView}
+                onSetClubView={setClubView}
+                recentRowMetricIds={recentRowMetricIds}
                 isNewShot={profileIsNewShot}
                 headerAction={liveHeaderActions}
               />

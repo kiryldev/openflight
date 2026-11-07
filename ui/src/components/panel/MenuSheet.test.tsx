@@ -45,6 +45,14 @@ describe('MenuSheet accent', () => {
   });
 });
 
+describe('MenuSheet stats row', () => {
+  it('does not offer a separate stat selection control', () => {
+    const html = renderMenu();
+    expect(html).not.toContain('Stats row');
+    expect(html).not.toContain('menu-sheet__chips');
+  });
+});
+
 describe('MenuSheet battery', () => {
   it('does not show battery in the menu, even when telemetry is present', () => {
     const powerStatus: PowerStatus = {

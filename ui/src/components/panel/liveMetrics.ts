@@ -25,12 +25,21 @@ export interface LiveMetric {
  * Live table: ten metrics, always the same ten in the same canonical order, so
  * the grid never reflows between shots. Metrics the shot did not produce render
  * as {@link NO_VALUE} rather than disappearing. The selected metric is shown in
- * the center hero via {@link resolveSelectedMetric}; grid order stays fixed.
+ * the center hero via {@link resolveSelectedMetric}.
  */
 export const LIVE_METRIC_COUNT = 10;
 
 /** Metric count for a swing-speed session: a single 5-tile row. */
 export const SWING_METRIC_COUNT = 5;
+export const MAX_RECENT_ROW_METRICS = 5;
+
+export interface ClubDelivery {
+  attackAngle: number | null;
+  clubPath: number | null;
+  attackIsExperimental: boolean;
+  clubPathIsExperimental: boolean;
+  fusedDeliveryAttempted: boolean;
+}
 
 function formatOptionalAngle(value: number | null, signed = false): string {
   if (value === null) return NO_VALUE;
@@ -70,35 +79,46 @@ function experimentalStatus(status: string | null | undefined): string {
   return status.replace(/^rejected_/, 'rejected: ').replaceAll('_', ' ');
 }
 
-function buildBallStrikeMetrics(shot: Shot, unitSystem: UnitSystem): LiveMetric[] {
-  const speedUnit = getSpeedUnit(unitSystem);
-  const carry = shot.carry_spin_adjusted ?? shot.estimated_carry_yards;
-  const angleConfidence = launchAngleQuality(shot.launch_angle_confidence);
-  const angleEstimated = shot.angle_source === 'estimated';
-  const horizontalLaunchIsCameraAssisted = shot.launch_angle_horizontal_source === 'camera_assisted_experimental';
+export function resolveClubDelivery(shot: Shot): ClubDelivery {
   const fusedDeliveryAttempted = shot.experimental_fused_status != null;
   const attackAngle =
     shot.club_angle_deg ??
     shot.experimental_fused_attack_angle_deg ??
     (!fusedDeliveryAttempted ? shot.experimental_attack_angle_deg : null) ??
     null;
-  const attackIsExperimental =
-    shot.club_angle_deg === null &&
-    (shot.experimental_fused_attack_angle_deg != null ||
-      shot.experimental_fused_status != null ||
-      shot.experimental_attack_angle_deg != null ||
-      shot.experimental_attack_angle_status != null);
   const clubPath =
     shot.club_path_deg ??
     shot.experimental_fused_club_path_deg ??
     (!fusedDeliveryAttempted ? shot.experimental_club_path_deg : null) ??
     null;
-  const clubPathIsExperimental =
-    shot.club_path_deg === null &&
-    (shot.experimental_fused_club_path_deg != null ||
-      shot.experimental_fused_status != null ||
-      shot.experimental_club_path_deg != null ||
-      shot.experimental_club_path_status != null);
+
+  return {
+    attackAngle,
+    clubPath,
+    fusedDeliveryAttempted,
+    attackIsExperimental:
+      shot.club_angle_deg === null &&
+      (shot.experimental_fused_attack_angle_deg != null ||
+        shot.experimental_fused_status != null ||
+        shot.experimental_attack_angle_deg != null ||
+        shot.experimental_attack_angle_status != null),
+    clubPathIsExperimental:
+      shot.club_path_deg === null &&
+      (shot.experimental_fused_club_path_deg != null ||
+        shot.experimental_fused_status != null ||
+        shot.experimental_club_path_deg != null ||
+        shot.experimental_club_path_status != null),
+  };
+}
+
+function buildBallStrikeMetrics(shot: Shot, unitSystem: UnitSystem): LiveMetric[] {
+  const speedUnit = getSpeedUnit(unitSystem);
+  const carry = shot.carry_spin_adjusted ?? shot.estimated_carry_yards;
+  const angleConfidence = launchAngleQuality(shot.launch_angle_confidence);
+  const angleEstimated = shot.angle_source === 'estimated';
+  const horizontalLaunchIsCameraAssisted = shot.launch_angle_horizontal_source === 'camera_assisted_experimental';
+  const { attackAngle, clubPath, attackIsExperimental, clubPathIsExperimental, fusedDeliveryAttempted } =
+    resolveClubDelivery(shot);
 
   return [
     {
@@ -273,8 +293,7 @@ export function resolveSelectedMetric(metrics: LiveMetric[], selectedId: string 
 }
 
 /**
- * Put the selected metric first for the non-full-screen Live grid. Full-screen
- * mode keeps canonical order and uses {@link resolveSelectedMetric} instead.
+ * Put the selected metric first for the non-full-screen Live grid.
  */
 export function pinSelectedMetric(metrics: LiveMetric[], selectedId: string | null): LiveMetric[] {
   if (metrics.length === 0) {
@@ -287,4 +306,16 @@ export function pinSelectedMetric(metrics: LiveMetric[], selectedId: string | nu
   }
 
   return [selected, ...metrics.filter((metric) => metric.id !== selected.id)];
+}
+
+export function orderRowMetrics(metrics: LiveMetric[], recentIds: string[]): LiveMetric[] {
+  const metricById = new Map(metrics.map((metric) => [metric.id, metric]));
+  const seen = new Set<string>();
+  const recent = recentIds
+    .slice(0, MAX_RECENT_ROW_METRICS)
+    .filter((id) => !seen.has(id) && seen.add(id))
+    .map((id) => metricById.get(id))
+    .filter((metric): metric is LiveMetric => metric !== undefined);
+
+  return [...recent, ...metrics.filter((metric) => !seen.has(metric.id))];
 }

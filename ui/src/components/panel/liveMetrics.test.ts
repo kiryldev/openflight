@@ -4,7 +4,9 @@ import {
   buildLiveMetrics,
   LIVE_METRIC_COUNT,
   NO_VALUE,
+  orderRowMetrics,
   pinSelectedMetric,
+  resolveClubDelivery,
   resolveSelectedMetric,
   SWING_METRIC_COUNT,
   type LiveMetric,
@@ -306,5 +308,71 @@ describe('pinSelectedMetric', () => {
 
   it('handles an empty metric list', () => {
     expect(pinSelectedMetric([], 'ball_speed')).toEqual([]);
+  });
+});
+
+describe('resolveClubDelivery', () => {
+  it('prefers measured values, then fused values, then standalone experimental values', () => {
+    expect(resolveClubDelivery(makeShot())).toMatchObject({ attackAngle: 2.1, clubPath: -0.6 });
+    expect(
+      resolveClubDelivery(
+        makeShot({
+          club_angle_deg: null,
+          club_path_deg: null,
+          experimental_fused_attack_angle_deg: -4,
+          experimental_fused_club_path_deg: 3,
+          experimental_fused_status: 'candidate_available',
+        })
+      )
+    ).toMatchObject({ attackAngle: -4, clubPath: 3, attackIsExperimental: true, clubPathIsExperimental: true });
+    expect(
+      resolveClubDelivery(
+        makeShot({
+          club_angle_deg: null,
+          club_path_deg: null,
+          experimental_attack_angle_deg: -2,
+          experimental_club_path_deg: 1,
+        })
+      )
+    ).toMatchObject({ attackAngle: -2, clubPath: 1 });
+  });
+
+  it('does not expose superseded standalone candidates after fusion was attempted', () => {
+    expect(
+      resolveClubDelivery(
+        makeShot({
+          club_angle_deg: null,
+          club_path_deg: null,
+          experimental_attack_angle_deg: -2,
+          experimental_club_path_deg: 1,
+          experimental_fused_status: 'rejected_no_impact',
+        })
+      )
+    ).toMatchObject({ attackAngle: null, clubPath: null });
+  });
+});
+
+describe('orderRowMetrics', () => {
+  const metrics = buildLiveMetrics(makeShot(), 'imperial', emptySwingStats);
+
+  it('puts valid unique recent selections first and preserves canonical order for the rest', () => {
+    const ordered = orderRowMetrics(metrics, ['spin', 'club_path', 'spin', 'missing', 'carry', 'club_speed']);
+    expect(ordered.map((metric) => metric.id)).toEqual([
+      'spin',
+      'club_path',
+      'carry',
+      'ball_speed',
+      'club_speed',
+      'smash',
+      'launch_v',
+      'launch_h',
+      'spin_axis',
+      'club_aoa',
+    ]);
+  });
+
+  it('leaves swing-speed metrics in their canonical order when ball-strike pins are stored', () => {
+    const swing = buildLiveMetrics(makeShot({ mode: 'swing-speed' }), 'imperial', emptySwingStats);
+    expect(orderRowMetrics(swing, ['ball_speed', 'spin'])).toEqual(swing);
   });
 });

@@ -44,7 +44,8 @@ function render(
   shots: Shot[] = shot ? [shot] : [],
   selectedMetricId: string | null = null,
   isNewShot = false,
-  fullScreen = true
+  fullScreen = true,
+  clubView = false
 ) {
   return text(
     renderToString(
@@ -57,6 +58,9 @@ function render(
         selectedMetricId={selectedMetricId}
         onSelectMetric={() => {}}
         fullScreen={fullScreen}
+        clubView={clubView}
+        onSetClubView={() => {}}
+        recentRowMetricIds={['spin', 'club_path', 'carry', 'ball_speed', 'club_speed']}
         isNewShot={isNewShot}
       />
     )
@@ -155,6 +159,39 @@ describe('LivePanel', () => {
     expect(html).toContain('shot-flash');
     expect(tileLabels(html)[0]).toBe('Spin');
     expect(html).toMatch(/metric-card--selected[\s\S]*?>Spin</);
+  });
+
+  it('shows the selected metric above the impact graphic and omits it from the recent single row', () => {
+    const html = render(makeShot(), undefined, 'spin', false, true, true);
+
+    expect(html).toContain('live-panel__body--club-view');
+    expect(html).toContain('live-panel__impact-layout');
+    expect(html).toContain('club-impact');
+    expect(html.indexOf('live-panel__hero')).toBeLessThan(html.indexOf('club-impact'));
+    expect(html).toContain('live-panel__grid--single-row');
+    expect(tileLabels(html).slice(0, 5)).toEqual(['Club path', 'Carry', 'Ball speed', 'Club speed', 'Smash']);
+    expect(html).toContain('live-panel__grid--of-9');
+    expect(html.match(/live-panel__grid[\s\S]*?>Spin</g)).toBeNull();
+    expect(html.match(/metric-card--interactive/g)).toHaveLength(9);
+    expect(html).toContain('aria-label="Hide club impact"');
+  });
+
+  it('hides the club impact toggle outside full screen and in swing-speed mode', () => {
+    expect(render(makeShot(), undefined, null, false, false)).not.toContain('live-panel__club-toggle');
+    const swing = makeShot({ mode: 'swing-speed' });
+    expect(render(swing, [swing])).not.toContain('live-panel__club-toggle');
+  });
+
+  it('uses the side-view club silhouette as the impact toggle icon', () => {
+    const html = render(makeShot());
+    const sideView = readFileSync(fileURLToPath(new URL('../../assets/driver-head-side-view.svg', import.meta.url)), 'utf8');
+    const bodyPath = sideView.match(/<path d="(M29 150[^"]+)"/)?.[1];
+    const toggle = html.match(/<button[^>]*live-panel__club-toggle[\s\S]*?<\/button>/)?.[0];
+
+    expect(bodyPath).toBeDefined();
+    expect(toggle).toContain(bodyPath);
+    expect(toggle).not.toContain('M5 4v11');
+    expect(toggle).not.toContain('<image');
   });
 
   it('does not show the spotlight for a restored session shot', () => {

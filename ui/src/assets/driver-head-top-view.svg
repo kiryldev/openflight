@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 565" fill="none">
+  <defs>
+    <linearGradient id="face" x1="34" y1="201" x2="384" y2="217" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#292929"/>
+      <stop offset=".22" stop-color="#161616"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <linearGradient id="toe" x1="367" y1="221" x2="412" y2="219" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#858989"/>
+      <stop offset=".45" stop-color="#e0e1dd"/>
+      <stop offset="1" stop-color="#858e8c"/>
+    </linearGradient>
+    <linearGradient id="heel" x1="46" y1="210" x2="97" y2="215" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f0f0ed"/>
+      <stop offset="1" stop-color="#818484"/>
+    </linearGradient>
+    <linearGradient id="shaft" x1="340" y1="470" x2="382" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8d9691"/>
+      <stop offset=".16" stop-color="#e1e4df"/>
+      <stop offset=".29" stop-color="#555b57"/>
+      <stop offset=".43" stop-color="#050606"/>
+      <stop offset=".73" stop-color="#050606"/>
+      <stop offset=".82" stop-color="#d7dcd7"/>
+      <stop offset="1" stop-color="#59625e"/>
+    </linearGradient>
+  </defs>
+  <path d="M369 54c-34-26-73-38-113-38C173 15 90 67 48 135 25 172 20 214 27 256c11 72 68 124 145 146 49 14 112 17 163 12l49-30c19-5 27-26 27-66 1-84-17-184-42-264Z" fill="url(#face)" stroke="#c4cbc6" stroke-width="3"/>
+  <path d="M369 55c22 66 41 163 42 244 0 46-5 77-27 84l-14-328Z" fill="url(#toe)" stroke="#818b86" stroke-width="1.5"/>
+  <path d="M95 114c-32 15-52 49-60 89-9 44 3 82 31 105 10 8 24 14 26 4 1-9-10-32-14-45-12-42-2-106 17-153Z" fill="url(#heel)"/>
+  <path d="M95 114c-33 15-53 49-60 89-9 45 3 83 31 106" stroke="#616766" stroke-width="1.4"/>
+  <path d="M325 173v28l17-14-17-14Zm26-2h3v32h-3z" fill="#dce0df"/>
+  <path d="M346 398c-5 4-7 11-7 20v147h43V418c0-10-4-17-10-21h-26Z" fill="url(#shaft)"/>
+  <path d="M334 397c0-19 9-30 24-30 16 0 26 12 27 30v13c-6-11-15-17-27-17-11 0-18 5-24 16v-12Z" fill="#bec3bf" stroke="#0c0d0d" stroke-width="2"/>
+  <path d="M335 408c6-13 15-19 26-19 11 0 20 7 24 19v13c-6-13-14-20-24-20-11 0-19 7-26 20v-13Z" fill="#070808"/>
+  <path d="M341 415c6-9 12-13 20-13s15 5 21 14" stroke="#b8bfba" stroke-width="3"/>
+</svg>

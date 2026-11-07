@@ -44,6 +44,106 @@ for (const viewport of KIOSK_VIEWPORTS) {
       expect(await overflowingLiveMetricValues(page)).toEqual([]);
     });
 
+    test('shows a bounded club-impact view with a five-wide draggable metric row', async ({ page }) => {
+      await withControlSocket(async (socket) => {
+        await simulateShot(socket);
+      });
+
+      await gotoApp(page);
+      await dismissPicker(page);
+      await page.getByRole('button', { name: 'Show club impact' }).click();
+
+      const body = page.locator('.live-panel__body--club-view');
+      const impact = page.locator('.club-impact');
+      const row = page.locator('.live-panel__grid--single-row');
+      await expect(body).toBeVisible();
+      await expect(impact).toBeVisible();
+      await expect(row.locator('.metric-card')).toHaveCount(9);
+      await expect(row.locator('.metric-card__label').filter({ hasText: /^Ball speed$/ })).toHaveCount(0);
+
+      const visualTextStyles = await impact.locator('svg text').evaluateAll((labels) => {
+        const rootSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return labels.map((label) => ({
+          transform: getComputedStyle(label).textTransform,
+          relativeSize: Number.parseFloat(getComputedStyle(label).fontSize) / rootSize,
+        }));
+      });
+      expect(visualTextStyles).toHaveLength(7);
+      expect(visualTextStyles.every(({ transform, relativeSize }) => transform === 'uppercase' && relativeSize <= 0.62)).toBe(true);
+
+      const heroBox = await body.locator('.live-panel__hero .metric-card').boundingBox();
+      const layoutBox = await body.locator('.live-panel__impact-layout').boundingBox();
+      const topBox = await impact.locator('g[aria-label="Top view"]').boundingBox();
+      const sideBox = await impact.locator('g[aria-label="Side view"]').boundingBox();
+      expect(heroBox).toBeTruthy();
+      expect(layoutBox).toBeTruthy();
+      expect(topBox).toBeTruthy();
+      expect(sideBox).toBeTruthy();
+      expect(heroBox!.y + heroBox!.height).toBeLessThan(topBox!.y);
+      expect(heroBox!.y + heroBox!.height).toBeLessThan(sideBox!.y);
+      expect(topBox!.x + topBox!.width).toBeLessThan(sideBox!.x);
+      expect(Math.abs(heroBox!.x + heroBox!.width / 2 - layoutBox!.x - layoutBox!.width / 2)).toBeLessThan(2);
+
+      await row.locator('.metric-card__label').filter({ hasText: /^Spin(?:Estimated)?$/ }).click();
+      const hero = body.locator('.live-panel__hero');
+      await expect(hero.locator('.metric-card__label')).toHaveText('Spin');
+      await expect(row.locator('.metric-card__label').filter({ hasText: /^Spin(?:Estimated)?$/ })).toHaveCount(0);
+      await expect(row.locator('.metric-card').first()).toContainText('Ball speed');
+      await expect(row.locator('.metric-card')).toHaveCount(9);
+      await expect(hero.locator('.metric-card__meta')).not.toBeEmpty();
+      const bands = await hero.evaluate((element) => {
+        const rect = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
+        const center = (box: DOMRect) => box.left + box.width / 2;
+        const card = rect('.metric-card');
+        const label = rect('.metric-card__label');
+        const value = rect('.metric-card__value-row');
+        const detail = rect('.metric-card__meta');
+        return { center: center(card), label: { center: center(label), bottom: label.bottom }, value: { center: center(value), top: value.top, bottom: value.bottom }, detail: { center: center(detail), top: detail.top } };
+      });
+      expect(bands.value.top).toBeGreaterThanOrEqual(bands.label.bottom - 1);
+      expect(bands.detail.top).toBeGreaterThanOrEqual(bands.value.bottom - 1);
+      expect(Math.abs(bands.label.center - bands.center)).toBeLessThanOrEqual(2);
+      expect(Math.abs(bands.value.center - bands.center)).toBeLessThanOrEqual(2);
+      expect(Math.abs(bands.detail.center - bands.center)).toBeLessThanOrEqual(2);
+
+      const visibleCount = await row.locator('.metric-card').evaluateAll((cards) => {
+        const rowBox = cards[0]?.parentElement?.getBoundingClientRect();
+        if (!rowBox) return 0;
+        return cards.filter((card) => {
+          const box = card.getBoundingClientRect();
+          return box.left >= rowBox.left - 1 && box.right <= rowBox.right + 1;
+        }).length;
+      });
+      expect(visibleCount).toBe(5);
+
+      const impactBox = await impact.boundingBox();
+      expect(impactBox).toBeTruthy();
+      expect(impactBox!.x).toBeGreaterThanOrEqual(0);
+      expect(impactBox!.y).toBeGreaterThanOrEqual(0);
+      expect(impactBox!.x + impactBox!.width).toBeLessThanOrEqual(viewport.width);
+      expect(impactBox!.y + impactBox!.height).toBeLessThanOrEqual(viewport.height);
+
+      const selectedBefore = await hero.locator('.metric-card__label').textContent();
+      const before = await row.evaluate((node) => node.scrollLeft);
+      const rowBox = await row.boundingBox();
+      expect(rowBox).toBeTruthy();
+      await page.mouse.move(rowBox!.x + rowBox!.width - 20, rowBox!.y + rowBox!.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(rowBox!.x + 20, rowBox!.y + rowBox!.height / 2, { steps: 12 });
+      await page.mouse.up();
+
+      await expect.poll(async () => row.evaluate((node) => node.scrollLeft)).toBeGreaterThan(before);
+      expect(await hero.locator('.metric-card__label').textContent()).toBe(selectedBefore);
+
+      await row.getByRole('button', { name: /Spin axis/ }).click();
+      await expect(hero.locator('.metric-card__label')).toHaveText('Spin axis');
+      await expect(row.getByRole('button', { name: /Spin axis/ })).toHaveCount(0);
+
+      await page.getByRole('button', { name: 'Hide club impact' }).click();
+      await expect(page.locator('.live-panel__grid--single-row')).toHaveCount(0);
+      await expect(page.locator('.live-panel__grid')).toHaveCSS('grid-template-rows', /.+ .+/);
+    });
+
     test('centers each tile and spreads label, value, and caption top to bottom', async ({ page }) => {
       await withControlSocket(async (socket) => {
         await simulateShot(socket);
