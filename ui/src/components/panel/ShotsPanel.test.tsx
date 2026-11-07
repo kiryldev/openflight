@@ -187,6 +187,6 @@ describe('ShotsPanel', () => {
 
   it('paints the list on the same surface as the header', () => {
     expect(render([makeShot()])).toContain('panel shots-panel');
-    expect(css).toMatch(/\.panel\.shots-panel \{[^}]*background: var\(--color-surface\)/);
+    expect(css).toMatch(/\.panel\.shots-panel \{[^}]*background: var\(--color-bg\)/);
   });
 });

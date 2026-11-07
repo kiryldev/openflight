@@ -6,7 +6,7 @@ import { useI18n } from '../../i18n/useI18n';
 import { StatusMenu } from './StatusMenu';
 
 interface PanelHeaderProps {
-  /** Uppercase panel name, e.g. "Live". */
+  /** Panel name shown as the page heading, e.g. "Live". */
   title: string;
   /** Secondary text after the hairline divider, e.g. the profile or shot count. */
   subtitle?: ReactNode;
@@ -77,6 +77,7 @@ export function PanelHeader({
   return (
     <header className="panel-header">
       <div className="panel-header__identity">
+        <h1 className="panel-header__title">{title}</h1>
         <button
           type="button"
           className="panel-header__status"
@@ -86,7 +87,6 @@ export function PanelHeader({
           aria-expanded={menuOpen}
         >
           <span className={`panel-header__dot panel-header__dot--${status}`} aria-hidden="true" />
-          <span className="panel-header__title">{title}</span>
         </button>
         {subtitle ? <IdentityPart className="panel-header__subtitle">{subtitle}</IdentityPart> : null}
         {club ? <IdentityPart className="panel-header__club">{club}</IdentityPart> : null}

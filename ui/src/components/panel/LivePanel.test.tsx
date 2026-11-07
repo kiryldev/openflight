@@ -43,7 +43,8 @@ function render(
   shot: Shot | null,
   shots: Shot[] = shot ? [shot] : [],
   selectedMetricId: string | null = null,
-  isNewShot = false
+  isNewShot = false,
+  fullScreen = true
 ) {
   return text(
     renderToString(
@@ -55,6 +56,7 @@ function render(
         clubLabel="DR"
         selectedMetricId={selectedMetricId}
         onSelectMetric={() => {}}
+        fullScreen={fullScreen}
         isNewShot={isNewShot}
       />
     )
@@ -62,7 +64,8 @@ function render(
 }
 
 function tileLabels(html: string): string[] {
-  return [...html.matchAll(/metric-card__label[^>]*>([^<]+)/g)].map((match) => match[1]);
+  const grid = html.match(/<div class="live-panel__grid[\s\S]*$/)?.[0] ?? html;
+  return [...grid.matchAll(/metric-card__label[^>]*>([^<]+)/g)].map((match) => match[1]);
 }
 
 describe('LivePanel', () => {
@@ -101,40 +104,57 @@ describe('LivePanel', () => {
     expect(html).not.toContain('metric-card--interactive');
   });
 
-  it('renders all ten metrics in a table with no hero slot', () => {
+  it('renders all ten metrics plus a center hero for the selected metric', () => {
     const html = render(makeShot());
 
-    expect(html).not.toContain('live-panel__hero');
+    expect(html).toContain('live-panel__hero');
+    expect(html).toContain('metric-card--hero');
     expect(html).toContain('live-panel__grid--of-10');
     expect(html.match(/metric-card--interactive/g)).toHaveLength(10);
     expect(html).toContain('>Club AoA<');
     expect(tileLabels(html)[0]).toBe('Ball speed');
+    expect(html).toMatch(/live-panel__hero[\s\S]*?>Ball speed</);
   });
 
-  it('pins the selected metric to the top left and marks its title selected', () => {
+  it('keeps grid order fixed and marks the selected metric in the hero and grid', () => {
     const html = render(makeShot(), undefined, 'spin');
 
-    expect(tileLabels(html)[0]).toBe('Spin');
+    expect(tileLabels(html)[0]).toBe('Ball speed');
+    expect(html).toMatch(/live-panel__hero[\s\S]*?>Spin</);
     expect(html).toContain('metric-card--selected');
-    expect(html).toMatch(/metric-card--selected[\s\S]*?>Spin</);
+    expect(html).toMatch(/live-panel__grid[\s\S]*metric-card--selected[\s\S]*?>Spin</);
     expect(html).toContain('>Ball speed<');
     expect(html.match(/metric-card--interactive/g)).toHaveLength(10);
+  });
+
+  it('shows the selected metric detail under the full-screen value', () => {
+    const spin = render(makeShot(), undefined, 'spin');
+    const carry = render(makeShot(), undefined, 'carry');
+
+    expect(spin).toMatch(/live-panel__hero[\s\S]*metric-card__confidence--high[\s\S]*metric-card__confidence-dots/);
+    expect(spin).toMatch(/live-panel__hero[\s\S]*>high</);
+    expect(carry).toMatch(/live-panel__hero[\s\S]*>Spin-adjusted</);
   });
 
   it('falls back to ball speed when the selected metric is not in this set', () => {
     const html = render(makeShot(), undefined, 'swing_best');
 
     expect(tileLabels(html)[0]).toBe('Ball speed');
-    expect(html).toMatch(/metric-card--selected[\s\S]*?>Ball speed</);
+    expect(html).toMatch(/live-panel__hero[\s\S]*?>Ball speed</);
+    expect(html).toMatch(/live-panel__grid[\s\S]*metric-card--selected[\s\S]*?>Ball speed</);
   });
 
-  it('keeps every metric visible after a new shot', () => {
-    const html = render(makeShot(), undefined, 'spin', true);
+  it('hides the center hero when full screen is off and pins the selected metric top-left', () => {
+    const html = render(makeShot(), undefined, 'spin', true, false);
 
-    expect(html).not.toContain('live-panel__spotlight');
+    expect(html).not.toContain('live-panel__hero"');
+    expect(html).not.toContain('metric-card--hero');
+    expect(html).toContain('live-panel__body--hero-collapsed');
     expect(html).toContain('live-panel__grid--of-10');
     expect(html.match(/metric-card--interactive/g)).toHaveLength(10);
     expect(html).toContain('shot-flash');
+    expect(tileLabels(html)[0]).toBe('Spin');
+    expect(html).toMatch(/metric-card--selected[\s\S]*?>Spin</);
   });
 
   it('does not show the spotlight for a restored session shot', () => {
@@ -231,7 +251,7 @@ describe('LivePanel', () => {
       )
     );
 
-    expect(html).not.toContain('live-panel__hero');
+    expect(html).toContain('live-panel__hero');
     expect(html).toContain('live-panel__grid--of-5');
     expect(html.match(/metric-card--interactive/g)).toHaveLength(5);
     expect(tileLabels(html)[0]).toBe('Last swing');

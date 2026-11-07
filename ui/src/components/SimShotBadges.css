@@ -9,9 +9,10 @@
   flex: 1 1 220px;
   min-width: 220px;
   padding: var(--space-sm);
-  border-radius: var(--radius);
-  background: rgba(148, 163, 184, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: var(--radius-card);
+  background: var(--color-muted);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-card);
 }
 
 .sim-shot-badges__header {
@@ -24,13 +25,13 @@
 .sim-shot-badges__title {
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-transform: none;
+  letter-spacing: -0.006em;
 }
 
 .sim-shot-badges__shot {
   font-size: 0.6875rem;
-  opacity: 0.6;
+  color: var(--color-text-muted);
 }
 
 .sim-shot-badges__grid {
@@ -47,12 +48,13 @@
 }
 
 .sim-shot-badges__label {
-  opacity: 0.65;
+  color: var(--color-text-muted);
 }
 
 .sim-shot-badges__value {
   font-weight: 600;
-  margin-left: auto;
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .sim-shot-badges__badge {
@@ -61,25 +63,25 @@
   justify-content: center;
   width: 14px;
   height: 14px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font-size: 0.5625rem;
   font-weight: 700;
 }
 
 .sim-shot-badges__badge--measured {
-  background: rgba(74, 222, 128, 0.18);
+  background: color-mix(in srgb, var(--color-success) 18%, var(--color-surface));
   color: var(--color-success);
 }
 
 .sim-shot-badges__badge--estimated {
-  background: rgba(251, 191, 36, 0.18);
+  background: color-mix(in srgb, var(--color-warning) 18%, var(--color-surface));
   color: var(--color-warning);
 }
 
 .sim-shot-badges__summary {
   margin-top: var(--space-xs);
   font-size: 0.625rem;
-  opacity: 0.6;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  text-transform: none;
+  letter-spacing: -0.006em;
 }

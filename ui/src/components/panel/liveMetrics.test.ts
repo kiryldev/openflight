@@ -5,6 +5,7 @@ import {
   LIVE_METRIC_COUNT,
   NO_VALUE,
   pinSelectedMetric,
+  resolveSelectedMetric,
   SWING_METRIC_COUNT,
   type LiveMetric,
 } from './liveMetrics';
@@ -256,6 +257,24 @@ describe('buildLiveMetrics', () => {
 
     const shared = swing.map((m) => m.id).filter((id) => ballStrike.some((m) => m.id === id));
     expect(shared).toEqual([]);
+  });
+});
+
+describe('resolveSelectedMetric', () => {
+  it('returns the matching metric without reordering the source list', () => {
+    const metrics = buildLiveMetrics(makeShot(), 'imperial', emptySwingStats);
+    const selected = resolveSelectedMetric(metrics, 'spin');
+
+    expect(selected?.id).toBe('spin');
+    expect(metrics[0]?.id).toBe('ball_speed');
+  });
+
+  it('falls back to the first metric when the id is missing', () => {
+    const metrics = buildLiveMetrics(makeShot(), 'imperial', emptySwingStats);
+
+    expect(resolveSelectedMetric(metrics, 'swing_best')?.id).toBe('ball_speed');
+    expect(resolveSelectedMetric(metrics, null)?.id).toBe('ball_speed');
+    expect(resolveSelectedMetric([], 'ball_speed')).toBeNull();
   });
 });
 

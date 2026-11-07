@@ -8,7 +8,7 @@ describe('ClearSessionDialog', () => {
   it('asks before clearing and names the profile', () => {
     const html = renderToString(<ClearSessionDialog profileName="Alex" onConfirm={noop} onCancel={noop} />);
 
-    expect(html).toContain('role="dialog"');
+    expect(html).toContain('<dialog');
     expect(html).toContain('aria-modal="true"');
     expect(html).toContain('id="clear-session-title"');
     expect(html).toContain('Clear Alex&#x27;s session?');
@@ -17,6 +17,7 @@ describe('ClearSessionDialog', () => {
     expect(html).toContain('>Cancel<');
     expect(html).toContain('clear-session-modal');
     expect(html).toContain('panel-action--danger');
+    expect(html).not.toContain('clear-session-modal__scrim');
   });
 
   it('keeps the confirm control as Clear session, matching the header action', () => {

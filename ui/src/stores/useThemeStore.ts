@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { applyAccent, readStoredAccent } from '../theme/accent';
 import { applyTheme, readStoredTheme, THEME_STORAGE_KEY, type Theme } from '../theme/theme';
 
 interface ThemeState {
@@ -18,6 +19,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
       }
     }
     applyTheme(theme);
+    applyAccent(readStoredAccent(), theme);
     set({ theme });
   },
 }));

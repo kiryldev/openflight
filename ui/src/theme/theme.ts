@@ -8,14 +8,14 @@ export function isTheme(value: unknown): value is Theme {
 
 export function readStoredTheme(): Theme {
   if (typeof window === 'undefined') {
-    return 'dark';
+    return 'light';
   }
 
   try {
     const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return isTheme(storedValue) ? storedValue : 'dark';
+    return isTheme(storedValue) ? storedValue : 'light';
   } catch {
-    return 'dark';
+    return 'light';
   }
 }
 
@@ -24,5 +24,12 @@ export function applyTheme(theme: Theme): void {
     return;
   }
 
-  document.documentElement.dataset.theme = theme;
+  const root = document.documentElement;
+  root.classList.add('theme-switching');
+  root.dataset.theme = theme;
+  // Force a style flush so the theme swap does not smear every color transition.
+  void root.offsetHeight;
+  requestAnimationFrame(() => {
+    root.classList.remove('theme-switching');
+  });
 }

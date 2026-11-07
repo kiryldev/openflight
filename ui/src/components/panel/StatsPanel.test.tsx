@@ -185,9 +185,8 @@ describe('StatsPanel', () => {
     expect(html).not.toContain('Filter by club');
   });
 
-  it('paints chips and tiles on the same surface', () => {
-    // Light theme made this look like a cream chip gutter over a white spreadsheet.
-    expect(css).toMatch(/\.stats-panel \{[^}]*background: var\(--color-surface\)/);
+  it('uses the page background around the summary cards', () => {
+    expect(css).toMatch(/\.stats-panel \{[^}]*background: var\(--color-bg\)/);
     expect(css).not.toMatch(/\.stats-panel__grid \.metric-card--label-above \{[^}]*align-content: center/);
   });
 });

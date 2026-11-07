@@ -112,12 +112,14 @@ describe('PanelFooter', () => {
     expect(liveButton).toContain('aria-pressed="true"');
   });
 
-  it('separates tabs with the same hairline divider as the header', () => {
+  it('provides all six labeled navigation destinations', () => {
     const html = render('live');
 
     expect(html).toContain('panel-footer__nav');
     expect(html).toContain('panel-footer__tabs');
     expect(html).toContain('aria-label="Panels"');
-    expect(html.match(/panel-header__divider/g)).toHaveLength(5);
+    for (const label of ['Live', 'Stats', 'Shots', 'Camera', 'Profiles', 'Debug']) {
+      expect(html).toContain(`<span>${label}</span>`);
+    }
   });
 });

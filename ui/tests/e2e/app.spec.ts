@@ -101,7 +101,7 @@ test('keeps shutdown visible and asks for confirmation', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
 });
 
-test('does not keep the previous metric title yellow after selecting a new hero', async ({ page }) => {
+test('marks only the newly selected metric as selected', async ({ page }) => {
   await withControlSocket(async (socket) => {
     await simulateShot(socket);
   });
@@ -109,16 +109,18 @@ test('does not keep the previous metric title yellow after selecting a new hero'
   await gotoApp(page);
   await dismissPicker(page);
 
-  await page.locator('.metric-card--interactive').filter({ hasText: 'Club speed' }).click();
+  await page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Club speed' }).click();
 
-  await expect(page.locator('.metric-card--selected')).toContainText('Club speed');
-  await expect(page.locator('.metric-card--selected .metric-card__label')).toHaveCSS('color', 'rgb(255, 212, 0)');
-  await expect(
-    page.locator('.metric-card--interactive').filter({ hasText: 'Ball speed' }).locator('.metric-card__label')
-  ).not.toHaveCSS('color', 'rgb(255, 212, 0)');
+  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card--selected')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Ball speed' })).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
 });
 
-test('pins a tapped metric top-left and remembers it', async ({ page }) => {
+test('puts a tapped metric in the center hero and remembers it', async ({ page }) => {
   await withControlSocket(async (socket) => {
     await simulateShot(socket);
   });
@@ -126,20 +128,50 @@ test('pins a tapped metric top-left and remembers it', async ({ page }) => {
   await gotoApp(page);
   await dismissPicker(page);
 
-  await expect(page.locator('.metric-card--selected')).toContainText('Ball speed');
+  await expect(page.locator('.live-panel__hero')).toContainText('Ball speed');
+  await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Ball speed');
   await expect(page.locator('.live-panel__spotlight')).toHaveCount(0);
 
-  await page.locator('.metric-card--interactive').filter({ hasText: 'Club speed' }).click();
+  await page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Club speed' }).click();
 
-  await expect(page.locator('.metric-card--selected')).toContainText('Club speed');
-  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club speed');
+  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
   await expect(page.locator('.live-panel__grid .metric-card')).toHaveCount(10);
   await expect(page.locator('.live-panel__grid')).toContainText('Ball speed');
 
   await page.reload();
   await dismissPicker(page);
-  await expect(page.locator('.metric-card--selected')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
+});
+
+test('can turn full screen off and on from the menu', async ({ page }) => {
+  await withControlSocket(async (socket) => {
+    await simulateShot(socket);
+  });
+
+  await gotoApp(page);
+  await dismissPicker(page);
+
+  await expect(page.locator('.live-panel__hero')).toBeVisible();
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('group', { name: 'Full screen' }).getByRole('button', { name: 'Off' }).click();
+  await page.getByRole('button', { name: 'Close menu' }).click();
+  await expect(page.locator('.live-panel__hero')).toHaveCount(0);
+  await expect(page.locator('.live-panel__grid .metric-card')).toHaveCount(10);
+
+  await page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Club speed' }).click();
   await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid')).toContainText('Ball speed');
+
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('group', { name: 'Full screen' }).getByRole('button', { name: 'On' }).click();
+  await page.getByRole('button', { name: 'Close menu' }).click();
+  await expect(page.locator('.live-panel__hero')).toBeVisible();
+  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
 });
 
 test('switches between primary navigation views', async ({ page }) => {
@@ -301,7 +333,7 @@ test('confirms before clearing and only removes that profile, then returns to Li
   await expect(page.locator('.shots-panel__row')).toHaveCount(1);
 });
 
-test('clear-session confirmation is a centered overlay at 800×480', async ({ page }) => {
+test('clear-session confirmation is a centered modal dialog at 800×480', async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 480 });
 
   await withControlSocket(async (socket) => {
@@ -317,42 +349,31 @@ test('clear-session confirmation is a centered overlay at 800×480', async ({ pa
   const dialog = page.getByRole('dialog', { name: "Clear Profile 1's session?" });
   await expect(dialog).toBeVisible();
 
-  const layout = await page.evaluate(() => {
-    const modal = document.querySelector('.clear-session-modal');
-    const scrim = document.querySelector('.clear-session-modal__scrim');
-    const box = document.querySelector('.clear-session-modal__dialog');
-    if (!(modal instanceof HTMLElement) || !(scrim instanceof HTMLElement) || !(box instanceof HTMLElement)) {
+  const layout = await dialog.evaluate((el) => {
+    const box = el.querySelector('.clear-session-modal__dialog');
+    if (!(el instanceof HTMLDialogElement) || !(box instanceof HTMLElement)) {
       return null;
     }
 
-    const modalStyle = getComputedStyle(modal);
-    const scrimStyle = getComputedStyle(scrim);
-    const modalRect = modal.getBoundingClientRect();
-    const scrimRect = scrim.getBoundingClientRect();
     const dialogRect = box.getBoundingClientRect();
     const dialogCenterX = (dialogRect.left + dialogRect.right) / 2;
     const dialogCenterY = (dialogRect.top + dialogRect.bottom) / 2;
 
     return {
-      modalPosition: modalStyle.position,
-      modalCoversViewport:
-        Math.abs(modalRect.width - window.innerWidth) < 4 && Math.abs(modalRect.height - window.innerHeight) < 4,
-      scrimPosition: scrimStyle.position,
-      scrimCoversModal:
-        Math.abs(scrimRect.width - modalRect.width) < 4 && Math.abs(scrimRect.height - modalRect.height) < 4,
+      open: el.open,
+      modal: el.matches(':modal'),
       dialogCentered:
-        Math.abs(dialogCenterX - window.innerWidth / 2) < 48 && Math.abs(dialogCenterY - window.innerHeight / 2) < 48,
+        Math.abs(dialogCenterX - window.innerWidth / 2) < 48 &&
+        Math.abs(dialogCenterY - window.innerHeight / 2) < 48,
     };
   });
 
   expect(layout).not.toBeNull();
-  expect(layout?.modalPosition).toMatch(/^(absolute|fixed)$/);
-  expect(layout?.modalCoversViewport).toBe(true);
-  expect(layout?.scrimPosition).toMatch(/^(absolute|fixed)$/);
-  expect(layout?.scrimCoversModal).toBe(true);
+  expect(layout?.open).toBe(true);
+  expect(layout?.modal).toBe(true);
   expect(layout?.dialogCentered).toBe(true);
 
-  await page.locator('.clear-session-modal__scrim').click({ position: { x: 8, y: 8 } });
+  await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await expect(page.locator('.panel-header__title')).toHaveText('Stats');
 
@@ -688,7 +709,8 @@ test('tabbing to a menu segmented control shows a real keyboard focus ring, not 
   // Real keyboard navigation between the two options must show the ring.
   await page.keyboard.press('Tab');
   await expect(metricButton).toBeFocused();
-  await expect(unitsGroup).toHaveCSS('outline-color', 'rgb(255, 212, 0)');
+  const focusColor = await page.locator('html').evaluate((element) => getComputedStyle(element).getPropertyValue('--color-accent').trim());
+  await expect(unitsGroup).toHaveCSS('outline-color', focusColor);
   await expect(unitsGroup).toHaveCSS('outline-style', 'solid');
   await expect(unitsGroup).toHaveCSS('outline-width', '2px');
   await expect(unitsGroup).toHaveCSS('outline-offset', '2px');

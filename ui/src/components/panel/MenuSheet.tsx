@@ -3,9 +3,11 @@ import { useI18n } from '../../i18n/useI18n';
 import { useSystemStore } from '../../stores/useSystemStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useLocaleStore } from '../../stores/useLocaleStore';
+import { useHeroMetricStore } from '../../stores/useHeroMetricStore';
 import { useUnitPreference } from '../../state/useUnitPreference';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { SimStatus } from '../SimStatus';
+import { AccentColorPicker } from './AccentColorPicker';
 
 interface MenuSheetProps {
   onClose: () => void;
@@ -26,6 +28,7 @@ export function MenuSheet({ onClose, onShutdown }: MenuSheetProps) {
   const { unitSystem, setUnitSystem } = useUnitPreference();
   const { theme, setTheme } = useThemeStore();
   const { locale, setLocale } = useLocaleStore();
+  const { fullScreen, setFullScreen } = useHeroMetricStore();
 
   return (
     <>
@@ -45,6 +48,19 @@ export function MenuSheet({ onClose, onShutdown }: MenuSheetProps) {
         </section>
 
         <section className="menu-sheet__section">
+          <span className="menu-sheet__section-title">{t('menu.fullScreen')}</span>
+          <SegmentedControl
+            ariaLabel={t('menu.fullScreen')}
+            value={fullScreen ? 'on' : 'off'}
+            options={[
+              { id: 'on', label: t('menu.fullScreenOn') },
+              { id: 'off', label: t('menu.fullScreenOff') },
+            ]}
+            onChange={(value) => setFullScreen(value === 'on')}
+          />
+        </section>
+
+        <section className="menu-sheet__section">
           <span className="menu-sheet__section-title">{t('menu.theme')}</span>
           <SegmentedControl
             ariaLabel={t('menu.theme')}
@@ -56,6 +72,8 @@ export function MenuSheet({ onClose, onShutdown }: MenuSheetProps) {
             onChange={setTheme}
           />
         </section>
+
+        <AccentColorPicker />
 
         <section className="menu-sheet__section">
           <span className="menu-sheet__section-title">{t('menu.language')}</span>

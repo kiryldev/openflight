@@ -5,8 +5,8 @@
   gap: 3px;
   padding: 3px;
   border: none;
-  border-radius: 8px;
-  background: var(--color-bg);
+  border-radius: var(--radius-pill);
+  background: var(--color-muted);
 }
 
 /* Real group focus ring, matching the app-wide :focus-visible convention
@@ -24,7 +24,7 @@
   padding: var(--space-xs) var(--space-md);
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   color: var(--color-text-muted);
   font-family: inherit;
   font-size: 0.625rem;
@@ -32,7 +32,7 @@
   letter-spacing: 0.04em;
   line-height: 1.2;
   text-align: center;
-  text-transform: uppercase;
+  text-transform: none;
   cursor: pointer;
   /* Group focus ring lives on .segmented-control; individual outlines make
      unselected options look like standalone buttons. */
@@ -45,7 +45,8 @@
 }
 
 .segmented-control__button--active {
-  background: var(--color-accent-block);
-  color: var(--color-accent-fg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text);
   font-weight: 700;
 }

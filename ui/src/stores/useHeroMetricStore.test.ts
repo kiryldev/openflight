@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const STORAGE_KEY = 'openflight.hero-metric';
+const FULLSCREEN_STORAGE_KEY = 'openflight.hero-expanded';
 
 function installBrowser(initial: Record<string, string> = {}, options: { failWrites?: boolean } = {}) {
   const store = { ...initial };
@@ -37,6 +38,7 @@ describe('useHeroMetricStore', () => {
     const useHeroMetricStore = await loadStore();
 
     expect(useHeroMetricStore.getState().heroMetricId).toBeNull();
+    expect(useHeroMetricStore.getState().fullScreen).toBe(true);
   });
 
   it('restores the promoted metric from storage', async () => {
@@ -44,6 +46,13 @@ describe('useHeroMetricStore', () => {
     const useHeroMetricStore = await loadStore();
 
     expect(useHeroMetricStore.getState().heroMetricId).toBe('spin');
+  });
+
+  it('restores full screen off from storage', async () => {
+    installBrowser({ [FULLSCREEN_STORAGE_KEY]: '0' });
+    const useHeroMetricStore = await loadStore();
+
+    expect(useHeroMetricStore.getState().fullScreen).toBe(false);
   });
 
   it('persists a new choice', async () => {
@@ -54,6 +63,19 @@ describe('useHeroMetricStore', () => {
 
     expect(useHeroMetricStore.getState().heroMetricId).toBe('carry');
     expect(store[STORAGE_KEY]).toBe('carry');
+  });
+
+  it('persists full screen on/off', async () => {
+    const store = installBrowser();
+    const useHeroMetricStore = await loadStore();
+
+    useHeroMetricStore.getState().setFullScreen(false);
+
+    expect(useHeroMetricStore.getState().fullScreen).toBe(false);
+    expect(store[FULLSCREEN_STORAGE_KEY]).toBe('0');
+
+    useHeroMetricStore.getState().setFullScreen(true);
+    expect(store[FULLSCREEN_STORAGE_KEY]).toBe('1');
   });
 
   it('replaces rather than accumulates the stored id', async () => {
@@ -72,6 +94,8 @@ describe('useHeroMetricStore', () => {
 
     expect(() => useHeroMetricStore.getState().setHeroMetricId('carry')).not.toThrow();
     expect(useHeroMetricStore.getState().heroMetricId).toBe('carry');
+    expect(() => useHeroMetricStore.getState().setFullScreen(false)).not.toThrow();
+    expect(useHeroMetricStore.getState().fullScreen).toBe(false);
   });
 
   it('falls back to no selection when there is no window (SSR / display route)', async () => {
@@ -79,5 +103,6 @@ describe('useHeroMetricStore', () => {
     const useHeroMetricStore = await loadStore();
 
     expect(useHeroMetricStore.getState().heroMetricId).toBeNull();
+    expect(useHeroMetricStore.getState().fullScreen).toBe(true);
   });
 });

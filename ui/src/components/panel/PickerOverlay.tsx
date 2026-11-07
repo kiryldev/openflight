@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { clubGroupLabel } from '../../i18n';
 import { useI18n } from '../../i18n/useI18n';
+import { useModalDialog } from '../../hooks/useModalDialog';
 import { PanelAction } from './PanelAction';
 import { initialPickerSection, pickerGridRows, type PickerSection } from './pickerSections';
 
@@ -21,16 +22,17 @@ interface PickerOverlayProps {
  */
 export function PickerOverlay({ title, selectedId, sections, onSelect, onClose, wide = false }: PickerOverlayProps) {
   const { t } = useI18n();
+  const dialogRef = useModalDialog();
   const [sectionName, setSectionName] = useState(() => initialPickerSection(sections, selectedId));
   const activeSection = sections.find((section) => section.name === sectionName) ?? sections[0];
   const options = activeSection?.options ?? [];
   const rows = pickerGridRows(sections);
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
+      onCancel={onClose}
       className={`picker-overlay${wide ? ' picker-overlay--wide' : ''}`}
-      role="dialog"
-      aria-modal="true"
       aria-label={title}
     >
       <div className="picker-overlay__header">
@@ -76,6 +78,6 @@ export function PickerOverlay({ title, selectedId, sections, onSelect, onClose, 
           ))}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

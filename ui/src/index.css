@@ -1,74 +1,83 @@
-/* OpenFlight - Instrument Panel Design System */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import '@fontsource-variable/inter';
 
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --font-body: 'Outfit', system-ui, -apple-system, sans-serif;
-  --radius: 0.25rem;
+  --font-body: 'Inter Variable', system-ui, -apple-system, sans-serif;
+  --radius: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-pill: 9999px;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 0.75rem;
   --space-lg: 1rem;
   --space-xl: 1.5rem;
-  --transition-fast: 0.15s ease;
-  --color-success: #4ade80;
-  --color-error: #ef4444;
-  --color-info: #60a5fa;
-  --color-warning: #fbbf24;
-  /* --color-danger / --color-danger-border are theme-scoped; see below. */
-}
-
-/*
- * Palette values come from the "Club Select Mockups" design doc: option 6a for
- * the dark theme, option 5a (its daylight sibling) for the light theme.
- *
- * --color-accent is for text and icons; --color-accent-block is for solid
- * fills, always paired with --color-accent-fg. Dark mode uses #ffd400 for
- * both. Light mode uses a darker, more saturated gold for both: pale
- * #ffd400 washes out on cream, as text and as a chip fill.
- *
- * Kiosk contrast: muted/faint stay readable on black. Never park shot
- * numbers on --color-text-muted. Grid gaps stay grey (--color-border).
- */
-[data-theme='dark'] {
-  color-scheme: dark;
-  --color-bg: #0e0f10;
-  --color-surface: #16181a;
-  --color-accent: #ffd400;
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 150ms ease-out;
+  /* Defaults match OpenFlight yellow; runtime accent picker overrides these. */
+  --color-accent-base: #ffd400;
   --color-accent-block: #ffd400;
   --color-accent-fg: #0b0b0c;
-  --color-text: #ffffff;
-  --color-text-muted: rgba(242, 241, 236, 0.78);
-  --color-text-faint: rgba(242, 241, 236, 0.58);
-  --color-border: rgba(242, 241, 236, 0.32);
-  --color-border-soft: rgba(242, 241, 236, 0.2);
-  --color-border-emphasis: var(--color-accent);
-  --color-scrim: rgba(6, 7, 8, 0.6);
-  --color-hatch: #101112;
-  --color-danger: #ff9b7d;
-  --color-danger-border: rgba(255, 120, 90, 0.5);
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --color-bg: #f4f2ec;
-  --color-surface: #f4f2ec;
-  --color-accent: #ffbe1b;
-  --color-accent-block: #ffbe1b;
-  --color-accent-fg: #14140f;
-  --color-text: #14140f;
-  --color-text-muted: rgba(20, 20, 15, 0.72);
-  --color-text-faint: rgba(20, 20, 15, 0.52);
-  --color-border: rgba(20, 20, 15, 0.28);
-  --color-border-soft: rgba(20, 20, 15, 0.16);
+  --color-frame: oklch(0.961 0 0);
+  --color-bg: oklch(0.991 0 0);
+  --color-surface: oklch(1 0 0);
+  --color-popover: oklch(1 0 0);
+  --color-muted: oklch(0.967 0 0);
+  --color-text: oklch(0.159 0 0);
+  /* L ≤ ~0.45 keeps muted labels at ≥4.5:1 on surface/bg (WCAG AA). */
+  --color-text-muted: oklch(0.42 0 0);
+  --color-text-faint: oklch(0.48 0 0);
+  --color-border: oklch(0.94 0 0);
+  --color-border-soft: oklch(0.96 0 0);
+  --color-input-border: oklch(0.61 0 0);
+  /* Text accent is darkened vs the yellow fill so labels clear 4.5:1. */
+  --color-accent: #9a6a00;
+  --color-accent-soft: color-mix(in oklab, var(--color-accent-base) 16%, var(--color-surface));
+  --color-success: oklch(0.517 0.173 142.88);
+  --color-warning: oklch(0.53 0.14 43.92);
+  --color-danger: oklch(0.575 0.236 29.23);
+  --color-error: var(--color-danger);
+  --color-info: var(--color-accent);
+  --color-danger-border: color-mix(in srgb, var(--color-danger) 45%, var(--color-surface));
   --color-border-emphasis: var(--color-accent);
-  --color-scrim: rgba(20, 20, 15, 0.45);
-  --color-hatch: #eae7df;
-  --color-danger: #b03a1a;
-  --color-danger-border: rgba(176, 58, 26, 0.5);
+  --color-scrim: oklch(0.159 0 0 / 0.3);
+  --color-hatch: var(--color-muted);
+  --shadow-card: 0 0 0 1px oklch(0 0 0 / 0.05), 0 2px 3px -2px oklch(0 0 0 / 0.08);
+  --shadow-float: 0 0 0 1px oklch(0 0 0 / 0.06), 0 12px 32px -12px oklch(0 0 0 / 0.18);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-frame: oklch(0.168 0 0);
+  --color-bg: oklch(0.195 0 0);
+  --color-surface: oklch(0.222 0 0);
+  --color-popover: oklch(0.252 0 0);
+  --color-muted: oklch(0.285 0 0);
+  --color-text: oklch(0.943 0 0);
+  --color-text-muted: oklch(0.725 0 0);
+  --color-text-faint: oklch(0.657 0 0);
+  --color-border: oklch(0.285 0 0);
+  --color-border-soft: oklch(0.26 0 0);
+  --color-input-border: oklch(0.55 0 0);
+  --color-accent: #ffd400;
+  --color-accent-soft: color-mix(in oklab, var(--color-accent-base) 28%, var(--color-surface));
+  --color-success: oklch(0.739 0.179 148.05);
+  --color-warning: oklch(0.862 0.151 85.01);
+  --color-danger: oklch(0.663 0.224 28.29);
+  --color-error: var(--color-danger);
+  --color-info: var(--color-accent);
+  --color-danger-border: color-mix(in srgb, var(--color-danger) 45%, var(--color-surface));
+  --color-border-emphasis: var(--color-accent);
+  --color-scrim: oklch(0 0 0 / 0.6);
+  --color-hatch: var(--color-muted);
+  --shadow-card: 0 0 0 1px oklch(1 0 0 / 0.08);
+  --shadow-float: 0 0 0 1px oklch(1 0 0 / 0.12), 0 12px 32px oklch(0 0 0 / 0.3);
 }
 
 html {
@@ -78,6 +87,8 @@ html {
   color: var(--color-text);
   background-color: var(--color-bg);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -108,7 +119,7 @@ button {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 0;
+  border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -122,6 +133,17 @@ button {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+.theme-switching,
+.theme-switching * {
+  transition: none !important;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

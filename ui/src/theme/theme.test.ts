@@ -4,6 +4,10 @@ import { applyTheme, isTheme, readStoredTheme, THEME_STORAGE_KEY } from './theme
 function installBrowser(initial: Record<string, string> = {}) {
   const store = { ...initial };
   const dataset: Record<string, string> = {};
+  const classList = {
+    add: vi.fn(),
+    remove: vi.fn(),
+  };
   const localStorage = {
     getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, value: string) => {
@@ -11,9 +15,19 @@ function installBrowser(initial: Record<string, string> = {}) {
     },
   };
   vi.stubGlobal('localStorage', localStorage);
-  vi.stubGlobal('document', { documentElement: { dataset } });
+  vi.stubGlobal('document', {
+    documentElement: {
+      dataset,
+      classList,
+      offsetHeight: 0,
+    },
+  });
   vi.stubGlobal('window', { localStorage });
-  return { dataset, store };
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0);
+    return 0;
+  });
+  return { dataset, store, classList };
 }
 
 afterEach(() => {
@@ -28,11 +42,11 @@ describe('theme helpers', () => {
     expect(isTheme(null)).toBe(false);
   });
 
-  it('defaults to dark when storage is missing or invalid', () => {
+  it('defaults to light when storage is missing or invalid', () => {
     installBrowser();
-    expect(readStoredTheme()).toBe('dark');
+    expect(readStoredTheme()).toBe('light');
     installBrowser({ [THEME_STORAGE_KEY]: 'nope' });
-    expect(readStoredTheme()).toBe('dark');
+    expect(readStoredTheme()).toBe('light');
   });
 
   it('reads a stored light theme', () => {
@@ -40,9 +54,11 @@ describe('theme helpers', () => {
     expect(readStoredTheme()).toBe('light');
   });
 
-  it('writes data-theme on the document element', () => {
-    const { dataset } = installBrowser();
+  it('writes data-theme on the document element and suppresses transitions', () => {
+    const { dataset, classList } = installBrowser();
     applyTheme('light');
     expect(dataset.theme).toBe('light');
+    expect(classList.add).toHaveBeenCalledWith('theme-switching');
+    expect(classList.remove).toHaveBeenCalledWith('theme-switching');
   });
 });

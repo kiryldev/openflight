@@ -31,6 +31,20 @@ describe('MenuSheet language', () => {
   });
 });
 
+describe('MenuSheet accent', () => {
+  it('offers preset swatches and a color-wheel swatch', () => {
+    const html = renderMenu();
+
+    expect(html).toContain('menu-sheet__section-title">Accent');
+    expect(html).toContain('aria-label="Accent presets"');
+    expect(html).toContain('aria-label="Default"');
+    expect(html).toContain('menu-sheet__swatch--wheel');
+    expect(html).toContain('type="color"');
+    expect(html).toContain('aria-label="Custom color"');
+    expect(html).not.toContain('Custom accent');
+  });
+});
+
 describe('MenuSheet battery', () => {
   it('does not show battery in the menu, even when telemetry is present', () => {
     const powerStatus: PowerStatus = {

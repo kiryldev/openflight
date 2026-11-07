@@ -79,8 +79,12 @@ function AppContent() {
   );
   const activeProfile = profiles.find((profile) => profile.id === activeProfileId) ?? null;
   const activeProfileName = activeProfile?.name ?? '';
-  const { heroMetricId, setHeroMetricId } = useHeroMetricStore(
-    useShallow((state) => ({ heroMetricId: state.heroMetricId, setHeroMetricId: state.setHeroMetricId }))
+  const { heroMetricId, setHeroMetricId, fullScreen } = useHeroMetricStore(
+    useShallow((state) => ({
+      heroMetricId: state.heroMetricId,
+      setHeroMetricId: state.setHeroMetricId,
+      fullScreen: state.fullScreen,
+    }))
   );
   const {
     debugReadings,
@@ -245,7 +249,7 @@ function AppContent() {
   }
 
   const changeClubAction = (
-    <PanelAction onClick={() => setPickerOpen(true)}>
+    <PanelAction variant="secondary" onClick={() => setPickerOpen(true)}>
       {isSwingSpeedMode ? t('app.changeImplement') : t('app.changeClub')}
     </PanelAction>
   );
@@ -259,6 +263,12 @@ function AppContent() {
         </PanelAction>
       ) : null}
       {changeClubAction}
+      {mockMode ? (
+        <SimulateBubble
+          label={isSwingSpeedMode ? t('app.simulateSwing') : t('app.simulateShot')}
+          onSimulate={() => socketService.simulateShot()}
+        />
+      ) : null}
     </>
   );
 
@@ -311,7 +321,7 @@ function AppContent() {
         />
       ) : null}
 
-      <main className="panel-app__main">
+      <main id="main-content" tabIndex={-1} className="panel-app__main">
         {currentView === 'live' && (
           <>
             <ShotProcessingArea phase={shotProcessingPhase}>
@@ -325,6 +335,7 @@ function AppContent() {
                 activeTrainingImplement={isSwingSpeedMode ? selectedTrainingImplement : undefined}
                 selectedMetricId={heroMetricId}
                 onSelectMetric={setHeroMetricId}
+                fullScreen={fullScreen}
                 isNewShot={profileIsNewShot}
                 headerAction={liveHeaderActions}
               />
@@ -395,12 +406,7 @@ function AppContent() {
             </div>
           </div>
         )}
-        {mockMode && currentView === 'live' ? (
-          <SimulateBubble
-            label={isSwingSpeedMode ? t('app.simulateSwing') : t('app.simulateShot')}
-            onSimulate={() => socketService.simulateShot()}
-          />
-        ) : null}
+
       </main>
 
       {/*

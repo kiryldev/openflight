@@ -190,8 +190,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and shot display continue normally with an operator-facing lighting warning.
 - **Instrument-panel kiosk UI.** The dashboard is a tabbed shell (Live, Stats,
   Shots, Camera, Profiles, Debug) instead of the previous stacked shot and stats
-  views. Tap a Live metric to pin it top-left while keeping all ten metrics
-  visible. The footer logo opens units, dark/light theme, language, simulator,
+  views. Tap a Live metric to show it as a center hero while keeping all ten
+  metrics visible in fixed order; Full screen on/off lives in the menu. The footer logo opens units, dark/light theme, language, simulator,
   and ball-detection status; a persistent footer power button opens the shutdown
   confirmation. Club (or training implement) selection is a Live header action.
   See the [UI README](https://github.com/open-flight/openflight/blob/main/ui/README.md).

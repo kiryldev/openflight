@@ -10,12 +10,11 @@
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font-size: 0.6875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  transition: all var(--transition-fast);
+  text-transform: none;
+  letter-spacing: -0.006em;
 }
 
 .sim-status__name {
@@ -29,50 +28,54 @@
 .sim-status__dot {
   width: 6px;
   height: 6px;
-  border-radius: var(--radius);
+  border-radius: 50%;
 }
 
-/* Connected */
 .sim-status__pill--ok {
-  background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.3);
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-success) 35%, var(--color-surface));
   color: var(--color-success);
 }
+
 .sim-status__pill--ok .sim-status__dot {
   background: var(--color-success);
-  box-shadow: 0 0 8px var(--color-success);
 }
 
-/* Connecting / reconnecting */
 .sim-status__pill--warn {
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-surface));
   color: var(--color-warning);
 }
+
 .sim-status__pill--warn .sim-status__dot {
   background: var(--color-warning);
-  animation: blink 1s infinite;
 }
 
-/* Error */
 .sim-status__pill--error {
-  background: rgba(248, 113, 113, 0.1);
-  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, var(--color-surface));
   color: var(--color-danger);
 }
+
 .sim-status__pill--error .sim-status__dot {
   background: var(--color-danger);
-  animation: blink 1s infinite;
 }
 
-/* Disabled / stopped */
 .sim-status__pill--off {
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
   color: var(--color-text-muted);
 }
+
 .sim-status__pill--off .sim-status__dot {
   background: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sim-status__pill--warn .sim-status__dot,
+  .sim-status__pill--error .sim-status__dot {
+    animation: blink 1s infinite;
+  }
 }
 
 @media (max-height: 500px) {
@@ -80,6 +83,7 @@
     padding: 2px var(--space-xs);
     font-size: 0.5625rem;
   }
+
   .sim-status__state {
     display: none;
   }

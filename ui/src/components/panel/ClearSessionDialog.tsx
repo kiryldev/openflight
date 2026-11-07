@@ -1,5 +1,6 @@
 import { PanelAction } from './PanelAction';
 import { useI18n } from '../../i18n/useI18n';
+import { useModalDialog } from '../../hooks/useModalDialog';
 
 interface ClearSessionDialogProps {
   profileName: string;
@@ -9,22 +10,18 @@ interface ClearSessionDialogProps {
 
 export function ClearSessionDialog({ profileName, onConfirm, onCancel }: ClearSessionDialogProps) {
   const { t } = useI18n();
+  const dialogRef = useModalDialog();
 
   return (
-    <div className="clear-session-modal">
-      <button
-        type="button"
-        className="clear-session-modal__scrim"
-        aria-label={t('clearSession.close')}
-        onClick={onCancel}
-      />
-      <div
-        className="clear-session-modal__dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="clear-session-title"
-        aria-describedby="clear-session-detail"
-      >
+    <dialog
+      ref={dialogRef}
+      className="clear-session-modal"
+      aria-modal="true"
+      aria-labelledby="clear-session-title"
+      aria-describedby="clear-session-detail"
+      onCancel={onCancel}
+    >
+      <div className="clear-session-modal__dialog">
         <span id="clear-session-title" className="clear-session-modal__title">
           {t('clearSession.confirm', { name: profileName })}
         </span>
@@ -40,6 +37,6 @@ export function ClearSessionDialog({ profileName, onConfirm, onCancel }: ClearSe
           </PanelAction>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

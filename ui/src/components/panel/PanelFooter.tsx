@@ -1,4 +1,13 @@
 import type { ReactNode } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Activity01Icon,
+  Analytics01Icon,
+  GolfBallIcon,
+  Camera01Icon,
+  UserGroupIcon,
+  Bug01Icon,
+} from '@hugeicons/core-free-icons';
 import Logo from '../../logo/Logo';
 import { TabBar } from '../ui/TabBar';
 import type { PanelView } from './views';
@@ -29,13 +38,18 @@ interface PanelFooterProps {
 }
 
 const VIEWS_WITH_UNITS: ReadonlySet<PanelView> = new Set(['live', 'stats', 'shots']);
+const VIEW_ICONS = {
+  live: Activity01Icon,
+  stats: Analytics01Icon,
+  shots: GolfBallIcon,
+  camera: Camera01Icon,
+  profiles: UserGroupIcon,
+  debug: Bug01Icon,
+};
 
 /**
- * Bottom bar: menu button, divider-separated panel tabs, and view meta on the
- * right. Panel actions live in `PanelHeader`.
- *
- * The mockup footer shows four tabs; Profiles and Debug are extra working
- * screens. Burying either behind a gesture makes them unreachable on the kiosk.
+ * Bottom bar: menu button, panel tabs, and view meta on the right.
+ * Kept as a compact horizontal strip so kiosk screens keep metric real estate.
  */
 export function PanelFooter({
   currentView,
@@ -54,7 +68,11 @@ export function PanelFooter({
   const showUnits = VIEWS_WITH_UNITS.has(currentView);
   const storePowerStatus = useSystemStore((state) => state.powerStatus);
   const powerStatus = powerStatusProp !== undefined ? powerStatusProp : storePowerStatus;
-  const options = PANEL_VIEWS.map((view) => {
+  const options = PANEL_VIEWS.map((item) => {
+    const view = {
+      ...item,
+      icon: <HugeiconsIcon icon={VIEW_ICONS[item.id]} strokeWidth={1.7} aria-hidden="true" />,
+    };
     const label = t(`nav.${view.id}` as MessageKey);
     switch (view.id) {
       case 'shots':
@@ -80,7 +98,6 @@ export function PanelFooter({
       <button
         type="button"
         className="panel-footer__menu"
-        style={{ border: 'none' }}
         onClick={onOpenMenu}
         aria-expanded={menuOpen}
         aria-label={t('nav.openMenu')}
@@ -95,7 +112,6 @@ export function PanelFooter({
           value={currentView}
           onChange={onChangeView}
           options={options}
-          separator={<span className="panel-header__divider" aria-hidden="true" />}
         />
       </div>
 

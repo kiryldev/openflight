@@ -6,9 +6,9 @@
   height: 30px;
   padding: 0 var(--space-sm);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   color: var(--color-text);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-muted);
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -81,22 +81,22 @@
 
 .power-status--plugged_in {
   color: var(--color-success);
-  border-color: rgba(74, 222, 128, 0.35);
-  background: rgba(74, 222, 128, 0.1);
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
 }
 
 .power-status--low {
   color: var(--color-warning);
-  border-color: rgba(251, 191, 36, 0.4);
-  background: rgba(251, 191, 36, 0.1);
+  border-color: color-mix(in srgb, var(--color-warning) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-warning) 12%, var(--color-surface));
 }
 
 .power-status--critical,
 .power-status--unavailable,
 .power-status--crit {
   color: var(--color-danger);
-  border-color: rgba(248, 113, 113, 0.4);
-  background: rgba(248, 113, 113, 0.1);
+  border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
 }
 
 .power-status--ok {
@@ -118,7 +118,7 @@
   color: var(--color-text-muted);
   font-size: 0.625rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.006em;
   gap: 0.5rem;
 }
 
@@ -178,7 +178,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
-  background: rgba(5, 7, 10, 0.78);
+  background: var(--color-scrim);
 }
 
 .power-warning {
@@ -187,14 +187,14 @@
   gap: var(--space-md);
   width: min(440px, 100%);
   padding: var(--space-lg);
-  border: 1px solid rgba(251, 191, 36, 0.55);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 55%, var(--color-surface));
+  border-radius: var(--radius-card);
+  background: var(--color-popover);
+  box-shadow: var(--shadow-float);
 }
 
 .power-warning--critical {
-  border-color: rgba(248, 113, 113, 0.7);
+  border-color: color-mix(in srgb, var(--color-danger) 70%, var(--color-surface));
 }
 
 .power-warning__battery {

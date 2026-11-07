@@ -122,7 +122,8 @@ on-screen name for past shots.
 units (MPH/YDS vs KMH/M), dark/light theme, language, and simulator status.
 The footer power icon is always visible and opens a
 shutdown confirmation. Change club (or training implement) lives on the Live
-header. Tap a Live metric to pin it top-left while keeping all metrics visible.
+header. Tap a Live metric to show it as the big center number while keeping all
+metrics visible in fixed order. Turn Full screen on or off in the menu.
 Camera-backed shots add a **Replay** action in the Live header and a play button
 in Shots. Selecting either action asks the backend to lazily create and cache a
 60 FPS MP4; no video conversion runs automatically after a shot. The full-screen

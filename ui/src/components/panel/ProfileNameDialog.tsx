@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PanelAction } from './PanelAction';
 import { useI18n } from '../../i18n/useI18n';
+import { useModalDialog } from '../../hooks/useModalDialog';
 
 const PROFILE_NAME_MAX = 40;
 
@@ -32,6 +33,7 @@ interface ProfileNameDialogProps {
 
 export function ProfileNameDialog({ mode, name, onChange, onConfirm, onCancel }: ProfileNameDialogProps) {
   const { t } = useI18n();
+  const dialogRef = useModalDialog();
   const [shifted, setShifted] = useState(true);
   const [symbols, setSymbols] = useState(false);
   const canConfirm = Boolean(name.trim());
@@ -51,7 +53,7 @@ export function ProfileNameDialog({ mode, name, onChange, onConfirm, onCancel }:
   };
 
   return (
-    <div className="profile-name-modal" role="dialog" aria-modal="true" aria-label={title}>
+    <dialog ref={dialogRef} onCancel={onCancel} className="profile-name-modal" aria-modal="true" aria-label={title}>
       <div className="profile-name-modal__header">
         <span id="profile-name-title" className="profile-name-modal__title">
           {title}
@@ -147,6 +149,6 @@ export function ProfileNameDialog({ mode, name, onChange, onConfirm, onCancel }:
           {t('shutdown.cancel')}
         </PanelAction>
       </div>
-    </div>
+    </dialog>
   );
 }

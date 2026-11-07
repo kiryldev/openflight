@@ -24,8 +24,8 @@ export interface LiveMetric {
 /**
  * Live table: ten metrics, always the same ten in the same canonical order, so
  * the grid never reflows between shots. Metrics the shot did not produce render
- * as {@link NO_VALUE} rather than disappearing. The selected metric is then
- * pinned to the top-left by {@link pinSelectedMetric}.
+ * as {@link NO_VALUE} rather than disappearing. The selected metric is shown in
+ * the center hero via {@link resolveSelectedMetric}; grid order stays fixed.
  */
 export const LIVE_METRIC_COUNT = 10;
 
@@ -259,18 +259,32 @@ export function buildLiveMetrics(shot: Shot, unitSystem: UnitSystem, swingStats:
 }
 
 /**
- * Put the selected metric first (top-left of the table) and keep the rest in
- * canonical order. Falls back to the first metric when `selectedId` is absent
- * from this list — which is the normal case right after switching between
- * ball-strike and swing-speed modes.
+ * Resolve which metric drives the center hero and selected highlight. Falls
+ * back to the first metric when `selectedId` is absent from this list — which
+ * is the normal case right after switching between ball-strike and swing-speed
+ * modes.
+ */
+export function resolveSelectedMetric(metrics: LiveMetric[], selectedId: string | null): LiveMetric | null {
+  if (metrics.length === 0) {
+    return null;
+  }
+
+  return metrics.find((metric) => metric.id === selectedId) ?? metrics[0];
+}
+
+/**
+ * Put the selected metric first for the non-full-screen Live grid. Full-screen
+ * mode keeps canonical order and uses {@link resolveSelectedMetric} instead.
  */
 export function pinSelectedMetric(metrics: LiveMetric[], selectedId: string | null): LiveMetric[] {
   if (metrics.length === 0) {
     return [];
   }
 
-  const selectedIndex = metrics.findIndex((metric) => metric.id === selectedId);
-  const index = selectedIndex === -1 ? 0 : selectedIndex;
+  const selected = resolveSelectedMetric(metrics, selectedId);
+  if (!selected) {
+    return [];
+  }
 
-  return [metrics[index], ...metrics.filter((_, i) => i !== index)];
+  return [selected, ...metrics.filter((metric) => metric.id !== selected.id)];
 }
