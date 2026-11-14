@@ -37,9 +37,20 @@ test('keeps visual labels compact on a large full-screen display', async ({ page
   );
   expect(labelHeights).toHaveLength(7);
   expect(Math.max(...labelHeights)).toBeLessThanOrEqual(32);
+  const grid = page.locator('.live-panel__grid--impact');
+  const geometry = await grid.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const cards = [...element.querySelectorAll('.metric-card')].map((card) => card.getBoundingClientRect());
+    return {
+      rows: new Set(cards.map((card) => Math.round(card.top))).size,
+      count: cards.length,
+      fits: cards.every((card) => card.left >= bounds.left - 1 && card.right <= bounds.right + 1 && card.bottom <= bounds.bottom + 1),
+    };
+  });
+  expect(geometry).toEqual({ rows: 2, count: 10, fits: true });
 });
 
-test('uses the upper space for the main stat and gives the desktop grid more height', async ({ page }) => {
+test('gives the desktop grid the whole body by default and keeps the club-view hero caption in bounds', async ({ page }) => {
   await page.setViewportSize({ width: 3414, height: 1102 });
   await withControlSocket(async (socket) => {
     await simulateShot(socket);
@@ -50,23 +61,13 @@ test('uses the upper space for the main stat and gives the desktop grid more hei
 
   await expect(page.locator('.panel-app__topbar .panel-header__meta')).toContainText('Last shot');
   await expect(page.locator('.live-panel__context')).toHaveCount(0);
-  const heroValueSize = await page.locator('.live-panel__hero .metric-card__value-row').evaluate((element) =>
-    Number.parseFloat(getComputedStyle(element).fontSize)
-  );
-  const rootSize = await page.locator('html').evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
-  expect(heroValueSize).toBeCloseTo(rootSize * 7, 0);
-
-  const body = await page.locator('.live-panel__body--hero-expanded').boundingBox();
-  const hero = await page.locator('.live-panel__hero').boundingBox();
-  const label = await page.locator('.live-panel__hero .metric-card__label').boundingBox();
-  const grid = await page.locator('.live-panel__grid').boundingBox();
-  expect(body).toBeTruthy();
-  expect(hero).toBeTruthy();
-  expect(label).toBeTruthy();
-  expect(grid).toBeTruthy();
-  expect(hero!.height / body!.height).toBeLessThanOrEqual(0.26);
-  expect(grid!.height / body!.height).toBeGreaterThanOrEqual(0.72);
-  expect(label!.y - hero!.y).toBeLessThanOrEqual(hero!.height * 0.28);
+  await expect(page.locator('.live-panel__hero')).toHaveCount(0);
+  await expect(page.locator('.live-panel__body--hero-collapsed')).toBeVisible();
+  const collapsedBody = await page.locator('.live-panel__body--hero-collapsed').boundingBox();
+  const collapsedGrid = await page.locator('.live-panel__grid').boundingBox();
+  expect(collapsedBody).toBeTruthy();
+  expect(collapsedGrid).toBeTruthy();
+  expect(collapsedGrid!.height / collapsedBody!.height).toBeGreaterThanOrEqual(0.9);
 
   await page.evaluate(async () => {
     const { useShotStore } = await import('/src/stores/useShotStore.ts');
@@ -75,23 +76,23 @@ test('uses the upper space for the main stat and gives the desktop grid more hei
       useShotStore.getState().updateShot({ ...shot, carry_spin_adjusted: shot.estimated_carry_yards });
     }
   });
+  await page.getByRole('button', { name: 'Show club impact' }).click();
   await page.locator('.live-panel__grid .metric-card').filter({ hasText: 'Carry' }).click();
-  const value = await page.locator('.live-panel__hero .metric-card__value-row').boundingBox();
-  const caption = await page.locator('.live-panel__hero .metric-card__subtext').boundingBox();
-  expect(value).toBeTruthy();
-  expect(caption).toBeTruthy();
-  expect(caption!.y).toBeGreaterThanOrEqual(value!.y + value!.height - 1);
-  expect(caption!.y + caption!.height).toBeLessThanOrEqual(hero!.y + hero!.height + 1);
+
+  const assertCaptionInHero = async () => {
+    const hero = await page.locator('.live-panel__hero').boundingBox();
+    const value = await page.locator('.live-panel__hero .metric-card__value-row').boundingBox();
+    const caption = await page.locator('.live-panel__hero .metric-card__subtext').boundingBox();
+    expect(hero).toBeTruthy();
+    expect(value).toBeTruthy();
+    expect(caption).toBeTruthy();
+    expect(caption!.y).toBeGreaterThanOrEqual(value!.y + value!.height - 1);
+    expect(caption!.y + caption!.height).toBeLessThanOrEqual(hero!.y + hero!.height + 1);
+  };
+  await assertCaptionInHero();
 
   await page.setViewportSize({ width: 1024, height: 768 });
-  const shorterHero = await page.locator('.live-panel__hero').boundingBox();
-  const shorterValue = await page.locator('.live-panel__hero .metric-card__value-row').boundingBox();
-  const shorterCaption = await page.locator('.live-panel__hero .metric-card__subtext').boundingBox();
-  expect(shorterHero).toBeTruthy();
-  expect(shorterValue).toBeTruthy();
-  expect(shorterCaption).toBeTruthy();
-  expect(shorterCaption!.y).toBeGreaterThanOrEqual(shorterValue!.y + shorterValue!.height - 1);
-  expect(shorterCaption!.y + shorterCaption!.height).toBeLessThanOrEqual(shorterHero!.y + shorterHero!.height + 1);
+  await assertCaptionInHero();
 });
 
 for (const viewport of KIOSK_VIEWPORTS) {
@@ -109,6 +110,7 @@ for (const viewport of KIOSK_VIEWPORTS) {
       const main = page.locator('.panel-app__main');
       const footer = page.locator('.panel-footer');
       await expect(topBar.getByRole('button', { name: 'Change club' })).toBeVisible();
+      await expect(topBar.getByRole('button', { name: 'Show club impact' })).toBeVisible();
       await expect(topBar.getByRole('button', { name: 'Simulate shot' })).toBeVisible();
       await expect(topBar.locator('.panel-header__subtitle')).toHaveText('Profile 1');
       await expect(main.locator('.panel-header')).toHaveCount(0);
@@ -121,7 +123,9 @@ for (const viewport of KIOSK_VIEWPORTS) {
       expect(clubBox).toBeTruthy();
       expect(Math.abs(titleBox!.x - logoBox!.x)).toBeLessThanOrEqual(2);
       const actions = topBar.locator('.panel-header__actions > button');
-      await expect(actions).toHaveCount(2);
+      await expect(actions).toHaveCount(3);
+      const actionNames = await actions.evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label') ?? button.textContent?.trim()));
+      expect(actionNames.slice(0, 2)).toEqual(['Show club impact', 'Change club']);
       const actionSizes = await actions.evaluateAll((buttons) => buttons.map((button) => ({
         hitHeight: button.getBoundingClientRect().height,
         visualHeight: Number.parseFloat(getComputedStyle(button, '::before').height),
@@ -164,7 +168,7 @@ for (const viewport of KIOSK_VIEWPORTS) {
       expect(await overflowingLiveMetricValues(page)).toEqual([]);
     });
 
-    test('shows a bounded club-impact view with a five-wide draggable metric row', async ({ page }) => {
+    test('shows a bounded club-impact view above two rows of all ten metrics', async ({ page }) => {
       await withControlSocket(async (socket) => {
         await simulateShot(socket);
       });
@@ -175,11 +179,11 @@ for (const viewport of KIOSK_VIEWPORTS) {
 
       const body = page.locator('.live-panel__body--club-view');
       const impact = page.locator('.club-impact');
-      const row = page.locator('.live-panel__grid--single-row');
+      const row = page.locator('.live-panel__grid--impact');
       await expect(body).toBeVisible();
       await expect(impact).toBeVisible();
-      await expect(row.locator('.metric-card')).toHaveCount(9);
-      await expect(row.locator('.metric-card__label').filter({ hasText: /^Ball speed$/ })).toHaveCount(0);
+      await expect(row.locator('.metric-card')).toHaveCount(10);
+      await expect(row.locator('.metric-card__label').filter({ hasText: /^Ball speed$/ })).toHaveCount(1);
 
       const visualTextStyles = await impact.locator('svg text').evaluateAll((labels) => {
         const rootSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -216,9 +220,9 @@ for (const viewport of KIOSK_VIEWPORTS) {
       await row.locator('.metric-card__label').filter({ hasText: /^Spin(?:Estimated)?$/ }).click();
       const hero = body.locator('.live-panel__hero');
       await expect(hero.locator('.metric-card__label')).toHaveText('Spin');
-      await expect(row.locator('.metric-card__label').filter({ hasText: /^Spin(?:Estimated)?$/ })).toHaveCount(0);
-      await expect(row.locator('.metric-card').first()).toContainText('Ball speed');
-      await expect(row.locator('.metric-card')).toHaveCount(9);
+      await expect(row.locator('.metric-card__label').filter({ hasText: /^Spin(?:Estimated)?$/ })).toHaveCount(1);
+      await expect(row.locator('.metric-card').first()).toContainText('Spin');
+      await expect(row.locator('.metric-card')).toHaveCount(10);
       await expect(hero.locator('.metric-card__meta')).not.toBeEmpty();
       const bands = await hero.evaluate((element) => {
         const rect = (selector: string) => element.querySelector(selector)!.getBoundingClientRect();
@@ -243,7 +247,16 @@ for (const viewport of KIOSK_VIEWPORTS) {
           return box.left >= rowBox.left - 1 && box.right <= rowBox.right + 1;
         }).length;
       });
-      expect(visibleCount).toBe(5);
+      expect(visibleCount).toBe(10);
+      const cardRows = await row.locator('.metric-card').evaluateAll((cards) =>
+        [...new Set(cards.map((card) => Math.round(card.getBoundingClientRect().top)))]
+      );
+      expect(cardRows).toHaveLength(2);
+      const gridBox = await row.boundingBox();
+      expect(gridBox).toBeTruthy();
+      expect(layoutBox!.y + layoutBox!.height).toBeLessThanOrEqual(gridBox!.y + 1);
+      const lastCard = await row.locator('.metric-card').last().boundingBox();
+      expect(lastCard!.y + lastCard!.height).toBeLessThanOrEqual(gridBox!.y + gridBox!.height + 1);
 
       const impactBox = await impact.boundingBox();
       expect(impactBox).toBeTruthy();
@@ -252,24 +265,12 @@ for (const viewport of KIOSK_VIEWPORTS) {
       expect(impactBox!.x + impactBox!.width).toBeLessThanOrEqual(viewport.width);
       expect(impactBox!.y + impactBox!.height).toBeLessThanOrEqual(viewport.height);
 
-      const selectedBefore = await hero.locator('.metric-card__label').textContent();
-      const before = await row.evaluate((node) => node.scrollLeft);
-      const rowBox = await row.boundingBox();
-      expect(rowBox).toBeTruthy();
-      await page.mouse.move(rowBox!.x + rowBox!.width - 20, rowBox!.y + rowBox!.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(rowBox!.x + 20, rowBox!.y + rowBox!.height / 2, { steps: 12 });
-      await page.mouse.up();
-
-      await expect.poll(async () => row.evaluate((node) => node.scrollLeft)).toBeGreaterThan(before);
-      expect(await hero.locator('.metric-card__label').textContent()).toBe(selectedBefore);
-
       await row.getByRole('button', { name: /Spin axis/ }).click();
       await expect(hero.locator('.metric-card__label')).toHaveText('Spin axis');
-      await expect(row.getByRole('button', { name: /Spin axis/ })).toHaveCount(0);
+      await expect(row.getByRole('button', { name: /Spin axis/ })).toHaveAttribute('aria-pressed', 'true');
 
       await page.getByRole('button', { name: 'Hide club impact' }).click();
-      await expect(page.locator('.live-panel__grid--single-row')).toHaveCount(0);
+      await expect(page.locator('.live-panel__grid--impact')).toHaveCount(0);
       await expect(page.locator('.live-panel__grid')).toHaveCSS('grid-template-rows', /.+ .+/);
     });
 
@@ -390,13 +391,14 @@ for (const viewport of KIOSK_VIEWPORTS) {
       }
     });
 
-    test('centers the full-screen label, value, and caption', async ({ page }) => {
+    test('centers the club-view hero label, value, and caption', async ({ page }) => {
       await withControlSocket(async (socket) => {
         await simulateShot(socket);
       });
 
       await gotoApp(page);
       await dismissPicker(page);
+      await page.getByRole('button', { name: 'Show club impact' }).click();
       await page.locator('.live-panel__grid .metric-card').filter({ hasText: 'V. launch' }).click();
       const hero = page.locator('.live-panel__hero');
       await expect(hero.locator('.metric-card__label')).toContainText('V. launch');
@@ -422,13 +424,14 @@ for (const viewport of KIOSK_VIEWPORTS) {
       expect(Math.abs(centers.valueAndCaption - centers.hero)).toBeLessThanOrEqual(2);
     });
 
-    test('keeps the full-screen carry caption beneath its value', async ({ page }) => {
+    test('keeps the club-view hero carry caption beneath its value', async ({ page }) => {
       await withControlSocket(async (socket) => {
         await simulateShot(socket);
       });
 
       await gotoApp(page);
       await dismissPicker(page);
+      await page.getByRole('button', { name: 'Show club impact' }).click();
       await page.evaluate(async () => {
         const { useShotStore } = await import('/src/stores/useShotStore.ts');
         const shot = useShotStore.getState().latestShot;
@@ -453,13 +456,14 @@ for (const viewport of KIOSK_VIEWPORTS) {
       expect(captionBox!.y + captionBox!.height).toBeLessThanOrEqual(heroBox!.y + heroBox!.height + 1);
     });
 
-    test('keeps the full-screen caption fully visible', async ({ page }) => {
+    test('keeps the club-view hero caption fully visible', async ({ page }) => {
       await withControlSocket(async (socket) => {
         await simulateShot(socket);
       });
 
       await gotoApp(page);
       await dismissPicker(page);
+      await page.getByRole('button', { name: 'Show club impact' }).click();
       await page.locator('.live-panel__grid .metric-card').filter({ hasText: 'V. launch' }).click();
       const hero = page.locator('.live-panel__hero');
       await expect(hero.locator('.metric-card__label')).toContainText('V. launch');

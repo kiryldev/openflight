@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const STORAGE_KEY = 'openflight.hero-metric';
-const FULLSCREEN_STORAGE_KEY = 'openflight.hero-expanded';
 const CLUB_VIEW_STORAGE_KEY = 'openflight.club-view';
 const PINNED_METRICS_STORAGE_KEY = 'openflight.pinned-row-metrics';
 
@@ -40,7 +39,6 @@ describe('useHeroMetricStore', () => {
     const useHeroMetricStore = await loadStore();
 
     expect(useHeroMetricStore.getState().heroMetricId).toBeNull();
-    expect(useHeroMetricStore.getState().fullScreen).toBe(true);
     expect(useHeroMetricStore.getState().clubView).toBe(false);
     expect(useHeroMetricStore.getState().recentRowMetricIds).toEqual([
       'ball_speed',
@@ -58,11 +56,12 @@ describe('useHeroMetricStore', () => {
     expect(useHeroMetricStore.getState().heroMetricId).toBe('spin');
   });
 
-  it('restores full screen off from storage', async () => {
-    installBrowser({ [FULLSCREEN_STORAGE_KEY]: '0' });
+  it('ignores the retired hero-only full-screen flag', async () => {
+    installBrowser({ 'openflight.hero-expanded': '1' });
     const useHeroMetricStore = await loadStore();
 
-    expect(useHeroMetricStore.getState().fullScreen).toBe(false);
+    expect(useHeroMetricStore.getState().clubView).toBe(false);
+    expect(useHeroMetricStore.getState()).not.toHaveProperty('fullScreen');
   });
 
   it('persists a new choice', async () => {
@@ -75,17 +74,17 @@ describe('useHeroMetricStore', () => {
     expect(store[STORAGE_KEY]).toBe('carry');
   });
 
-  it('persists full screen on/off', async () => {
+  it('persists club view on/off', async () => {
     const store = installBrowser();
     const useHeroMetricStore = await loadStore();
 
-    useHeroMetricStore.getState().setFullScreen(false);
+    useHeroMetricStore.getState().setClubView(true);
+    expect(useHeroMetricStore.getState().clubView).toBe(true);
+    expect(store[CLUB_VIEW_STORAGE_KEY]).toBe('1');
 
-    expect(useHeroMetricStore.getState().fullScreen).toBe(false);
-    expect(store[FULLSCREEN_STORAGE_KEY]).toBe('0');
-
-    useHeroMetricStore.getState().setFullScreen(true);
-    expect(store[FULLSCREEN_STORAGE_KEY]).toBe('1');
+    useHeroMetricStore.getState().setClubView(false);
+    expect(useHeroMetricStore.getState().clubView).toBe(false);
+    expect(store[CLUB_VIEW_STORAGE_KEY]).toBe('0');
   });
 
   it('moves the latest selected metric to the front of the row history', async () => {
@@ -149,8 +148,6 @@ describe('useHeroMetricStore', () => {
 
     expect(() => useHeroMetricStore.getState().setHeroMetricId('carry')).not.toThrow();
     expect(useHeroMetricStore.getState().heroMetricId).toBe('carry');
-    expect(() => useHeroMetricStore.getState().setFullScreen(false)).not.toThrow();
-    expect(useHeroMetricStore.getState().fullScreen).toBe(false);
     expect(() => useHeroMetricStore.getState().setClubView(true)).not.toThrow();
     expect(useHeroMetricStore.getState().clubView).toBe(true);
   });
@@ -160,7 +157,6 @@ describe('useHeroMetricStore', () => {
     const useHeroMetricStore = await loadStore();
 
     expect(useHeroMetricStore.getState().heroMetricId).toBeNull();
-    expect(useHeroMetricStore.getState().fullScreen).toBe(true);
     expect(useHeroMetricStore.getState().clubView).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { GolfBallIcon } from '@hugeicons/core-free-icons';
 import type { Shot } from '../../types/shot';
@@ -6,7 +6,6 @@ import { computeSwingSpeedStats, filterShotsByProfile } from '../../types/shot';
 import { useUnitPreference } from '../../state/useUnitPreference';
 import { useI18n } from '../../i18n/useI18n';
 import { useSharedFitFontSize } from '../../hooks/useFitFontSize';
-import { useDragScroll } from '../../hooks/useDragScroll';
 import { MetricCard } from '../ui/MetricCard';
 import { ClubImpactView } from './ClubImpactView';
 import { buildLiveMetrics, orderRowMetrics, pinSelectedMetric, resolveSelectedMetric } from './liveMetrics';
@@ -17,22 +16,23 @@ interface LivePanelProps {
   profileId: string;
   /** Undefined outside swing-speed mode. Scopes the swing stats to one implement. */
   activeTrainingImplement?: string;
-  /** Metric shown in full-screen mode. */
+  /** Metric shown as the hero in club-impact view and pinned first otherwise. */
   selectedMetricId?: string | null;
   onSelectMetric?: (id: string) => void;
-  /** When true, the selected metric is shown as a large center number. */
-  fullScreen?: boolean;
+  /**
+   * Expanded mode: selected metric as a large hero above the club impact
+   * visual. Ignored for swing-speed shots. Toggled from the Live header.
+   */
   clubView?: boolean;
-  onSetClubView?: (visible: boolean) => void;
   recentRowMetricIds?: string[];
   /** True for a freshly captured shot (not a restored session). */
   isNewShot?: boolean;
 }
 
 /**
- * Live metric table. Full-screen mode keeps canonical order and shows the
- * selected value as a large center number. Outside full screen, tapping a tile
- * moves it top-left.
+ * Live metric table. In club-impact view the selected value is a large hero
+ * above the impact visual and the grid follows recent-selection order.
+ * Otherwise only the grid shows, and tapping a tile moves it top-left.
  */
 export function LivePanel({
   shot,
@@ -41,9 +41,7 @@ export function LivePanel({
   activeTrainingImplement,
   selectedMetricId = null,
   onSelectMetric,
-  fullScreen = true,
   clubView = false,
-  onSetClubView,
   recentRowMetricIds = [],
   isNewShot = false,
 }: LivePanelProps) {
@@ -57,21 +55,19 @@ export function LivePanel({
     () => computeSwingSpeedStats(profileShots, { profileId, trainingImplement: activeTrainingImplement }),
     [profileShots, profileId, activeTrainingImplement]
   );
-  const rowRef = useRef<HTMLDivElement>(null);
-  const rowScroll = useDragScroll(rowRef, 'x');
+  const showImpact = Boolean(clubView && displayedShot && displayedShot.mode !== 'swing-speed');
   const metrics = useMemo(() => {
     if (!displayedShot) {
       return [];
     }
     const built = buildLiveMetrics(displayedShot, unitSystem, swingStats);
-    if (!fullScreen) return pinSelectedMetric(built, selectedMetricId);
-    return clubView ? orderRowMetrics(built, recentRowMetricIds) : built;
+    return showImpact ? orderRowMetrics(built, recentRowMetricIds) : pinSelectedMetric(built, selectedMetricId);
     // locale is not read in the factory; t() is a stable import. Without it,
     // changing language would keep stale metric labels.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
-  }, [displayedShot, unitSystem, swingStats, selectedMetricId, fullScreen, clubView, recentRowMetricIds, locale]);
+  }, [displayedShot, unitSystem, swingStats, selectedMetricId, showImpact, recentRowMetricIds, locale]);
   const selected = useMemo(() => resolveSelectedMetric(metrics, selectedMetricId), [metrics, selectedMetricId]);
-  const rowMetrics = fullScreen && clubView ? metrics.filter((metric) => metric.id !== selected?.id) : metrics;
+  const rowMetrics = metrics;
   const gridRef = useSharedFitFontSize(
     rowMetrics.length > 0,
     rowMetrics.map((metric) => `${metric.value}:${metric.unit ?? ''}`).join('|')
@@ -94,31 +90,14 @@ export function LivePanel({
   const bodyClass = [
     'panel__body',
     'live-panel__body',
-    fullScreen ? 'live-panel__body--hero-expanded' : 'live-panel__body--hero-collapsed',
-    fullScreen && clubView ? 'live-panel__body--club-view' : '',
+    showImpact ? 'live-panel__body--hero-expanded live-panel__body--club-view' : 'live-panel__body--hero-collapsed',
   ].join(' ');
-  const canShowClubView = fullScreen && displayedShot && displayedShot.mode !== 'swing-speed';
 
   return (
     <div className="panel">
       <div className={bodyClass}>
         {isProfileNewShot ? <div className="shot-flash" /> : null}
-        {canShowClubView && onSetClubView ? (
-          <button
-            type="button"
-            className="live-panel__club-toggle"
-            aria-label={clubView ? t('impact.hide') : t('impact.show')}
-            aria-pressed={clubView}
-            onClick={() => onSetClubView(!clubView)}
-          >
-            <svg viewBox="20 58 204 132" aria-hidden="true">
-              <path d="M198 58v36" />
-              <path d="M29 150c17-24 57-46 99-55 23-5 48-8 62-3 12 4 18 15 20 31l6 45c1 9-4 14-13 15-51 3-114-1-164-8-9-1-13-6-12-13l2-12Z" />
-              <path d="M31 151c30-32 91-57 142-60 9-1 17 0 23 3" />
-            </svg>
-          </button>
-        ) : null}
-        {fullScreen && clubView && displayedShot ? (
+        {showImpact && displayedShot ? (
           <div className="live-panel__impact-layout">
             <div className="live-panel__hero" aria-live="polite">
               <MetricCard
@@ -136,33 +115,10 @@ export function LivePanel({
             </div>
             <ClubImpactView shot={displayedShot} />
           </div>
-        ) : fullScreen ? (
-          <div className="live-panel__hero" aria-live="polite">
-            <MetricCard
-              label={selected.label}
-              value={selected.value}
-              unit={selected.unit}
-              subtext={selected.subtext}
-              estimated={selected.estimated}
-              confidence={selected.confidence}
-              confidenceLabel={selected.confidenceLabel}
-              size="hero"
-              labelPosition="above"
-              selected
-            />
-          </div>
         ) : null}
         <div
-          ref={(node) => {
-            gridRef.current = node;
-            rowRef.current = node;
-          }}
-          className={`live-panel__grid live-panel__grid--of-${rowMetrics.length}${clubView && fullScreen ? ' live-panel__grid--single-row' : ''}`}
-          onPointerDown={clubView && fullScreen ? rowScroll.onPointerDown : undefined}
-          onPointerMove={clubView && fullScreen ? rowScroll.onPointerMove : undefined}
-          onPointerUp={clubView && fullScreen ? rowScroll.onPointerUp : undefined}
-          onPointerCancel={clubView && fullScreen ? rowScroll.onPointerCancel : undefined}
-          onClickCapture={clubView && fullScreen ? rowScroll.onClickCapture : undefined}
+          ref={gridRef}
+          className={`live-panel__grid live-panel__grid--of-${rowMetrics.length}${showImpact ? ' live-panel__grid--impact' : ''}`}
         >
           {rowMetrics.map((metric) => (
             <MetricCard
@@ -176,10 +132,7 @@ export function LivePanel({
               confidenceLabel={metric.confidenceLabel}
               labelPosition="above"
               selected={metric.id === selected.id}
-              onClick={onSelectMetric ? () => {
-                onSelectMetric(metric.id);
-                if (clubView && fullScreen && rowRef.current) rowRef.current.scrollLeft = 0;
-              } : undefined}
+              onClick={onSelectMetric ? () => onSelectMetric(metric.id) : undefined}
             />
           ))}
         </div>

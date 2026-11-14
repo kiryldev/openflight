@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 
 const STORAGE_KEY = 'openflight.hero-metric';
-const FULLSCREEN_STORAGE_KEY = 'openflight.hero-expanded';
 const CLUB_VIEW_STORAGE_KEY = 'openflight.club-view';
 // Preserve the saved order while changing the picker to recent selection order.
 const RECENT_METRICS_STORAGE_KEY = 'openflight.pinned-row-metrics';
@@ -27,7 +26,7 @@ function writeStorage(key: string, value: string): void {
 }
 
 /**
- * Which Live metric is selected and shown in full-screen mode. Persisted so
+ * Which Live metric is selected and shown as the hero in club-impact view. Persisted so
  * someone who cares about club speed keeps that choice across restarts.
  *
  * Stored as a plain metric id; an id that no longer exists falls back to the
@@ -37,12 +36,11 @@ function readStoredHeroMetric(): string | null {
   return readStorage(STORAGE_KEY);
 }
 
-/** Default on so the big-screen number is visible until Full screen is turned off. */
-function readStoredFullScreen(): boolean {
-  const stored = readStorage(FULLSCREEN_STORAGE_KEY);
-  return stored === null ? true : stored !== '0';
-}
-
+/**
+ * The single Live expanded mode: hero metric + club impact visual. Off by
+ * default (grid only). The old hero-only `openflight.hero-expanded` flag is no
+ * longer read.
+ */
 function readStoredClubView(): boolean {
   return readStorage(CLUB_VIEW_STORAGE_KEY) === '1';
 }
@@ -62,17 +60,14 @@ function readStoredRecentMetrics(): string[] {
 
 interface HeroMetricState {
   heroMetricId: string | null;
-  fullScreen: boolean;
   clubView: boolean;
   recentRowMetricIds: string[];
   setHeroMetricId: (id: string) => void;
-  setFullScreen: (fullScreen: boolean) => void;
   setClubView: (clubView: boolean) => void;
 }
 
 export const useHeroMetricStore = create<HeroMetricState>((set) => ({
   heroMetricId: readStoredHeroMetric(),
-  fullScreen: readStoredFullScreen(),
   clubView: readStoredClubView(),
   recentRowMetricIds: readStoredRecentMetrics(),
   setHeroMetricId: (heroMetricId) => {
@@ -85,10 +80,6 @@ export const useHeroMetricStore = create<HeroMetricState>((set) => ({
       writeStorage(RECENT_METRICS_STORAGE_KEY, JSON.stringify(recentRowMetricIds));
       return { heroMetricId, recentRowMetricIds };
     });
-  },
-  setFullScreen: (fullScreen) => {
-    writeStorage(FULLSCREEN_STORAGE_KEY, fullScreen ? '1' : '0');
-    set({ fullScreen });
   },
   setClubView: (clubView) => {
     writeStorage(CLUB_VIEW_STORAGE_KEY, clubView ? '1' : '0');

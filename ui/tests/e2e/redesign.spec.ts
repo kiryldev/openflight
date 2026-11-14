@@ -91,9 +91,8 @@ test('a narrow window can scroll to and select the final metric', async ({ page 
   await page.getByRole('button', { name: 'Simulate shot' }).click();
   await expect(page.locator('.live-panel__grid .metric-card')).toHaveCount(10);
   await page.locator('.live-panel__grid .metric-card').filter({ hasText: 'Club AoA' }).click();
-  await expect(page.locator('.live-panel__hero')).toContainText('Club AoA');
   await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club AoA');
-  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club AoA');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 

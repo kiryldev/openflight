@@ -111,7 +111,6 @@ test('marks only the newly selected metric as selected', async ({ page }) => {
 
   await page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Club speed' }).click();
 
-  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
   await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club speed');
   await expect(page.locator('.live-panel__grid .metric-card--selected')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Ball speed' })).toHaveAttribute(
@@ -120,7 +119,7 @@ test('marks only the newly selected metric as selected', async ({ page }) => {
   );
 });
 
-test('puts a tapped metric in the center hero and remembers it', async ({ page }) => {
+test('pins a tapped metric top-left in the default grid and remembers it', async ({ page }) => {
   await withControlSocket(async (socket) => {
     await simulateShot(socket);
   });
@@ -128,26 +127,24 @@ test('puts a tapped metric in the center hero and remembers it', async ({ page }
   await gotoApp(page);
   await dismissPicker(page);
 
-  await expect(page.locator('.live-panel__hero')).toContainText('Ball speed');
+  await expect(page.locator('.live-panel__hero')).toHaveCount(0);
   await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Ball speed');
   await expect(page.locator('.live-panel__spotlight')).toHaveCount(0);
 
   await page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Club speed' }).click();
 
-  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
   await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club speed');
-  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club speed');
   await expect(page.locator('.live-panel__grid .metric-card')).toHaveCount(10);
   await expect(page.locator('.live-panel__grid')).toContainText('Ball speed');
 
   await page.reload();
   await dismissPicker(page);
-  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
   await expect(page.locator('.live-panel__grid .metric-card--selected')).toContainText('Club speed');
-  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club speed');
 });
 
-test('can turn full screen off and on from the menu', async ({ page }) => {
+test('toggles the hero + club impact view from the Live header and remembers it', async ({ page }) => {
   await withControlSocket(async (socket) => {
     await simulateShot(socket);
   });
@@ -155,23 +152,35 @@ test('can turn full screen off and on from the menu', async ({ page }) => {
   await gotoApp(page);
   await dismissPicker(page);
 
-  await expect(page.locator('.live-panel__hero')).toBeVisible();
-  await page.getByRole('button', { name: 'Open menu' }).click();
-  await page.getByRole('group', { name: 'Full screen' }).getByRole('button', { name: 'Off' }).click();
-  await page.getByRole('button', { name: 'Close menu' }).click();
+  const topBar = page.locator('.panel-app__topbar');
+  const toggle = topBar.getByRole('button', { name: 'Show club impact' });
   await expect(page.locator('.live-panel__hero')).toHaveCount(0);
-  await expect(page.locator('.live-panel__grid .metric-card')).toHaveCount(10);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 
   await page.locator('.live-panel__grid .metric-card--interactive').filter({ hasText: 'Club speed' }).click();
-  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club speed');
-  await expect(page.locator('.live-panel__grid')).toContainText('Ball speed');
-
-  await page.getByRole('button', { name: 'Open menu' }).click();
-  await page.getByRole('group', { name: 'Full screen' }).getByRole('button', { name: 'On' }).click();
-  await page.getByRole('button', { name: 'Close menu' }).click();
-  await expect(page.locator('.live-panel__hero')).toBeVisible();
+  await toggle.click();
+  const hideToggle = topBar.getByRole('button', { name: 'Hide club impact' });
+  await expect(hideToggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.live-panel__body--club-view')).toBeVisible();
   await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
-  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Ball speed');
+  await expect(page.locator('.club-impact')).toBeVisible();
+  await expect(page.locator('.live-panel__grid .metric-card')).toHaveCount(10);
+
+  await page.reload();
+  await dismissPicker(page);
+  await expect(page.locator('.live-panel__hero')).toContainText('Club speed');
+
+  await topBar.getByRole('button', { name: 'Hide club impact' }).click();
+  await expect(page.locator('.live-panel__hero')).toHaveCount(0);
+  await expect(page.locator('.club-impact')).toHaveCount(0);
+  await expect(page.locator('.live-panel__grid .metric-card').first()).toContainText('Club speed');
+});
+
+test('no longer offers a Full screen setting in the menu', async ({ page }) => {
+  await gotoApp(page);
+  await dismissPicker(page);
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await expect(page.getByRole('group', { name: 'Full screen' })).toHaveCount(0);
 });
 
 test('switches between primary navigation views', async ({ page }) => {

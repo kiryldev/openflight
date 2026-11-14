@@ -3,7 +3,6 @@ import { useI18n } from '../../i18n/useI18n';
 import { useSystemStore } from '../../stores/useSystemStore';
 import { useThemeStore } from '../../stores/useThemeStore';
 import { useLocaleStore } from '../../stores/useLocaleStore';
-import { useHeroMetricStore } from '../../stores/useHeroMetricStore';
 import { useUnitPreference } from '../../state/useUnitPreference';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { SimStatus } from '../SimStatus';
@@ -28,7 +27,6 @@ export function MenuSheet({ onClose, onShutdown }: MenuSheetProps) {
   const { unitSystem, setUnitSystem } = useUnitPreference();
   const { theme, setTheme } = useThemeStore();
   const { locale, setLocale } = useLocaleStore();
-  const { fullScreen, setFullScreen } = useHeroMetricStore();
 
   return (
     <>
@@ -44,19 +42,6 @@ export function MenuSheet({ onClose, onShutdown }: MenuSheetProps) {
               { id: 'metric', label: 'KMH / M' },
             ]}
             onChange={setUnitSystem}
-          />
-        </section>
-
-        <section className="menu-sheet__section">
-          <span className="menu-sheet__section-title">{t('menu.fullScreen')}</span>
-          <SegmentedControl
-            ariaLabel={t('menu.fullScreen')}
-            value={fullScreen ? 'on' : 'off'}
-            options={[
-              { id: 'on', label: t('menu.fullScreenOn') },
-              { id: 'off', label: t('menu.fullScreenOff') },
-            ]}
-            onChange={(value) => setFullScreen(value === 'on')}
           />
         </section>
 

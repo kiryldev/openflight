@@ -79,11 +79,10 @@ function AppContent() {
   );
   const activeProfile = profiles.find((profile) => profile.id === activeProfileId) ?? null;
   const activeProfileName = activeProfile?.name ?? '';
-  const { heroMetricId, setHeroMetricId, fullScreen, clubView, setClubView, recentRowMetricIds } = useHeroMetricStore(
+  const { heroMetricId, setHeroMetricId, clubView, setClubView, recentRowMetricIds } = useHeroMetricStore(
     useShallow((state) => ({
       heroMetricId: state.heroMetricId,
       setHeroMetricId: state.setHeroMetricId,
-      fullScreen: state.fullScreen,
       clubView: state.clubView,
       setClubView: state.setClubView,
       recentRowMetricIds: state.recentRowMetricIds,
@@ -257,6 +256,22 @@ function AppContent() {
     </PanelAction>
   );
   const latestReplay = profileLatestShot?.camera_replay;
+  const canShowClubView = Boolean(profileLatestShot && profileLatestShot.mode !== 'swing-speed');
+  const clubViewAction = canShowClubView ? (
+    <PanelAction
+      variant="secondary"
+      className="panel-action--club-view"
+      aria-label={clubView ? t('impact.hide') : t('impact.show')}
+      aria-pressed={clubView}
+      onClick={() => setClubView(!clubView)}
+    >
+      <svg viewBox="20 58 204 132" aria-hidden="true">
+        <path d="M198 58v36" />
+        <path d="M29 150c17-24 57-46 99-55 23-5 48-8 62-3 12 4 18 15 20 31l6 45c1 9-4 14-13 15-51 3-114-1-164-8-9-1-13-6-12-13l2-12Z" />
+        <path d="M31 151c30-32 91-57 142-60 9-1 17 0 23 3" />
+      </svg>
+    </PanelAction>
+  ) : null;
 
   const liveHeaderActions = (
     <>
@@ -265,6 +280,7 @@ function AppContent() {
           {t('replay.open')}
         </PanelAction>
       ) : null}
+      {clubViewAction}
       {changeClubAction}
       {mockMode ? (
         <SimulateBubble
@@ -348,9 +364,7 @@ function AppContent() {
                 activeTrainingImplement={isSwingSpeedMode ? selectedTrainingImplement : undefined}
                 selectedMetricId={heroMetricId}
                 onSelectMetric={setHeroMetricId}
-                fullScreen={fullScreen}
                 clubView={clubView}
-                onSetClubView={setClubView}
                 recentRowMetricIds={recentRowMetricIds}
                 isNewShot={profileIsNewShot}
               />

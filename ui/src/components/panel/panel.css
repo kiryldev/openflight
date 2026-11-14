@@ -246,6 +246,39 @@
   font-size: 0.625rem;
 }
 
+/* Live header club-impact toggle: a secondary PanelAction with an icon that
+   fills with the accent while club view is on. In the top bar the visible pill
+   is the button's ::before, so the pressed fill targets that too. */
+.panel-action--club-view svg {
+  display: block;
+  width: 1.35rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.panel-action--club-view svg path {
+  vector-effect: non-scaling-stroke;
+}
+
+.panel-action--club-view[aria-pressed='true'] {
+  color: var(--color-bg);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.panel-app__topbar .panel-header__actions > .panel-action--club-view[aria-pressed='true'] {
+  background: transparent;
+}
+
+.panel-app__topbar .panel-header__actions > .panel-action--club-view[aria-pressed='true']::before {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
 .panel-header__meta {
   font-weight: 600;
   font-size: 0.625rem;
@@ -584,18 +617,13 @@
   gap: var(--space-xs);
 }
 
-/* Hero is a capped band; grid keeps the rest so ten tiles still fit values +
-   subtitles. Tall big screens grow the hero via the media query below. */
-.live-panel__body--hero-expanded {
-  grid-template-rows: minmax(0, 23%) minmax(0, 1fr);
-}
-
 .live-panel__body--hero-collapsed {
   grid-template-rows: minmax(0, 1fr);
 }
 
+/* Expanded Live mode (club view): hero + impact visual on top, two-row grid below. */
 .live-panel__body--hero-expanded.live-panel__body--club-view {
-  grid-template-rows: minmax(0, 80%) minmax(0, 20%);
+  grid-template-rows: minmax(0, 60%) minmax(0, 1fr);
 }
 
 .live-panel__impact-layout {
@@ -628,43 +656,6 @@
   grid-row: 4;
   align-self: center;
   align-items: center;
-}
-
-.live-panel__club-toggle {
-  position: absolute;
-  top: 0.3rem;
-  right: calc(var(--space-lg) + 0.25rem);
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0.5rem;
-  color: var(--color-text);
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  touch-action: manipulation;
-}
-
-.live-panel__club-toggle[aria-pressed='true'] {
-  color: var(--color-bg);
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-}
-
-.live-panel__club-toggle svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.live-panel__club-toggle svg path {
-  vector-effect: non-scaling-stroke;
 }
 
 .live-panel__hero {
@@ -866,42 +857,30 @@
   min-width: 0;
 }
 
-.live-panel__grid--single-row {
-  grid-template-columns: none;
-  grid-template-rows: minmax(0, 1fr);
-  grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 4 * var(--space-sm)) / 5);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  touch-action: none;
-  overscroll-behavior-x: contain;
+.live-panel__grid--impact {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
-.live-panel__grid--single-row::-webkit-scrollbar {
-  display: none;
-}
-
-.live-panel__grid--single-row .metric-card {
+.live-panel__grid--impact .metric-card {
   padding: 0.18rem 0.3rem;
   gap: 0.1rem;
-  touch-action: none;
 }
 
-.live-panel__grid--single-row .metric-card--label-above {
+.live-panel__grid--impact .metric-card--label-above {
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0.1rem;
 }
 
-.live-panel__grid--single-row .metric-card--label-above .metric-card__label {
+.live-panel__grid--impact .metric-card--label-above .metric-card__label {
   font-size: clamp(0.6rem, min(8cqi, 15cqb), 0.8rem);
 }
 
-.live-panel__grid--single-row .metric-card__value-row {
+.live-panel__grid--impact .metric-card__value-row {
   font-size: clamp(1.15rem, min(6vw, 18vh, 34cqi, 42cqb), 2.5rem);
 }
 
-.live-panel__grid--single-row .metric-card__meta {
+.live-panel__grid--impact .metric-card__meta {
   display: none;
 }
 
@@ -2158,26 +2137,6 @@
 
   .live-panel__grid .metric-card {
     padding: 0.75rem;
-  }
-
-  @media (min-height: 700px) {
-    .live-panel__body--hero-expanded {
-      grid-template-rows: minmax(0, 34%) minmax(0, 1fr);
-    }
-  }
-
-  @media (min-height: 900px) {
-    .live-panel__body--hero-expanded {
-      grid-template-rows: minmax(0, 26%) minmax(0, 1fr);
-    }
-
-    .live-panel__body--hero-expanded:not(.live-panel__body--club-view) .live-panel__hero .metric-card {
-      grid-template-rows: minmax(0, 0.75fr) auto auto auto minmax(0, 1.25fr);
-    }
-
-    .live-panel__body--hero-expanded:not(.live-panel__body--club-view) .live-panel__hero .metric-card__value-row {
-      font-size: clamp(1.75rem, min(18cqi, 72cqb), 7rem);
-    }
   }
 
   /* Prefer margin:auto centering — transform breaks native <dialog> focus wrap. */
